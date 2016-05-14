@@ -127,7 +127,7 @@ class Length(Reshape):
                 le[k, i] = 1
                 le[k, j] = -1
                 k += 1
-        le = T.as_tensor_variable(le)
+        le = T.as_tensor_variable(le.T)
         if input_value.ndim == 3:
             return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
         elif input_value.ndim == 4:

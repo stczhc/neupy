@@ -272,7 +272,7 @@ network = algorithms.Momentum(
   nesterov = True,
   momentum = 0.8, 
   shuffle_data=True,
-  show_epoch = 1
+  show_epoch = 5
 ) if load_i == -1 else load(load_i)
 
 print network

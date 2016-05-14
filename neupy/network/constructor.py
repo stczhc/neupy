@@ -7,7 +7,7 @@ import theano.tensor as T
 
 from neupy.utils import (AttributeKeyDict, asfloat, is_list_of_integers,
                          format_data, does_layer_accept_1d_feature)
-from neupy.layers import BaseLayer, Output, Dropout
+from neupy.layers import BaseLayer, Output, Dropout, Combination
 from neupy.layers.utils import generate_layers
 from neupy.core.properties import ChoiceProperty
 from neupy.layers.connections import LayerConnection, NetworkConnectionError
@@ -75,7 +75,13 @@ def create_input_variable(input_layer, variable_name):
         3: T.tensor3,
         4: T.tensor4,
     }
-    ndim = input_layer.weight.ndim
+    
+    if isinstance(input_layer, Combination):
+        ndim = 3
+    elif hasattr(input_layer, 'ndim') and not input_layer.ndim is None:
+        ndim = input_layer.ndim
+    else:
+        ndim = input_layer.weight.ndim
 
     if ndim not in dim_to_variable_type:
         raise ValueError("Layer's input needs to be 2, 3 or 4 dimensional. "

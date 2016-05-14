@@ -137,23 +137,38 @@ class ParameterBasedLayer(BaseLayer):
         Defaults to ``(0, 1)``.
     """
     size = IntProperty(minval=1)
+    presize = IntProperty(minval=1)
+    ndim = IntProperty(minval=1)
+    dotdim = IntProperty(minval=0)
     weight = SharedArrayProperty(default=None)
     bias = SharedArrayProperty(default=None)
     bounds = TypedListProperty(default=(0, 1), element_type=(int, float))
     init_method = ChoiceProperty(default=XAVIER_NORMAL,
                                  choices=VALID_INIT_METHODS)
 
-    def __init__(self, size, **options):
+    def __init__(self, size = None, dotdim = None, presize = None, ndim = None, **options):
         if size is not None:
             options['size'] = size
+        if presize is not None:
+            options['presize'] = presize
+        if dotdim is not None:
+            options['dotdim'] = dotdim
+        if ndim is not None:
+            options['ndim'] = ndim
         super(ParameterBasedLayer, self).__init__(**options)
 
     def weight_shape(self):
-        output_size = self.relate_to_layer.size
+        if not hasattr(self.relate_to_layer.__class__, 'presize') or self.relate_to_layer.presize is None:
+            output_size = self.relate_to_layer.size
+        else:
+            output_size = self.relate_to_layer.presize
         return (self.size, output_size)
 
     def bias_shape(self):
-        output_size = self.relate_to_layer.size
+        if not hasattr(self.relate_to_layer.__class__, 'presize') or self.relate_to_layer.presize is None:
+            output_size = self.relate_to_layer.size
+        else:
+            output_size = self.relate_to_layer.presize
         return (output_size,)
 
     def initialize(self):
@@ -178,3 +193,21 @@ class ParameterBasedLayer(BaseLayer):
     def __repr__(self):
         classname = self.__class__.__name__
         return '{name}({size})'.format(name=classname, size=self.size)
+
+class FeatureParameterBasedLayer(ParameterBasedLayer):
+    """parameter layer including shared weights and bias and future map
+    size only include small size"""
+    feature = IntProperty(minval=1)
+
+    def __init__(self, size, **options):
+        if feature is not None:
+            options['feature'] = feature
+        super(FeatureParameterBasedLayer, self).__init__(**options)
+
+    def weight_shape(self):
+        output_size = self.relate_to_layer.size
+        return (self.feature, self.size, output_size)
+
+    def bias_shape(self):
+        output_size = self.relate_to_layer.size
+        return (self.feature, output_size,)

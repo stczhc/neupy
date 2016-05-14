@@ -1,12 +1,10 @@
 import numpy as np
 import theano.tensor as T
 
-from neupy.core.properties import ProperFractionProperty, TypedListProperty
+from neupy.core.properties import ProperFractionProperty, TypedListProperty, IntProperty
 from .base import BaseLayer
 
-
-__all__ = ('Dropout', 'Reshape')
-
+__all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 'Length4D', 'Average')
 
 class Dropout(BaseLayer):
     """ Dropout layer
@@ -59,10 +57,13 @@ class Reshape(BaseLayer):
         set up new feature shape using tuples. Defaults to ``None``.
     """
     shape = TypedListProperty()
+    presize = IntProperty()
 
-    def __init__(self, shape=None, **options):
+    def __init__(self, shape=None, presize=None, **options):
         if shape is not None:
             options['shape'] = shape
+        if presize is not None:
+            options['presize'] = presize
         super(Reshape, self).__init__(**options)
 
     def output(self, input_value):
@@ -83,3 +84,62 @@ class Reshape(BaseLayer):
             output_shape = (input_shape,) + new_feature_shape
 
         return T.reshape(input_value, output_shape)
+
+class Length2D(Reshape):
+    def output(self, input_value):
+        if input_value.ndim == 3:
+            return (input_value[:, 0] - input_value[:, 1]).norm(2, axis = 1)
+        elif input_value.ndim == 4:
+            return (input_value[:, :, 0, :] - input_value[:, :, 1, :]).norm(2, axis = 2)
+            # return input_value
+
+class Length3D(Reshape):
+    def output(self, input_value):
+        le = [[1, -1, 0], [1, 0, -1], [0, 1, -1]]
+        le = T.as_tensor_variable(np.asarray(le).T)
+        if input_value.ndim == 3:
+            return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
+        elif input_value.ndim == 4:
+            return T.tensordot(input_value, le, axes = [2, 0]).norm(2, axis = 2)
+
+class Length4D(Reshape):
+    def output(self, input_value):
+        le = [[1, -1, 0, 0], [1, 0, -1, 0], [1, 0, 0, -1], 
+            [0, 1, -1, 0], [0, 1, 0, -1], [0, 0, 1, -1]]
+        le = T.as_tensor_variable(np.asarray(le).T)
+        if input_value.ndim == 3:
+            return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
+        elif input_value.ndim == 4:
+            return T.tensordot(input_value, le, axes = [2, 0]).norm(2, axis = 2)
+
+class Average(Reshape):
+    def output(self, input_value):
+        if input_value.ndim == 2:
+            return T.dot(input_value, T.ones((input_value.shape[1], 1))) / input_value.shape[1]
+        elif input_value.ndim == 3:
+            return T.dot(input_value, T.ones((input_value.shape[2], 1))) / input_value.shape[2]
+
+class Combination(BaseLayer):
+    """form all possible combination of the first dimension of the 
+    input data. 
+    num: num of objects to choose from.
+    comb: num of objects to choose"""
+    num = IntProperty()
+    comb = IntProperty()
+
+    def __init__(self, num=None, comb=None, **options):
+        if num is not None:
+            options['num'] = num
+        if comb is not None:
+            options['comb'] = comb
+        super(Combination, self).__init__(**options)
+        
+    def output(self, input_value):
+        n = self.comb
+        input_shape = self.num
+        import itertools
+        ee = np.eye(input_shape, dtype=int)
+        le = [list(g) for g in itertools.combinations(ee, n)]
+        le = T.as_tensor_variable(np.asarray(le))
+        return T.tensordot(le, input_value, axes = [2, 1]).swapaxes(2, 1).swapaxes(1, 0)
+        

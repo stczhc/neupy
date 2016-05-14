@@ -262,6 +262,7 @@ def apply_batches(function, arguments, batch_size, logger, description='',
 
         sliced_arguments = [argument[batch] for argument in arguments]
         output = function(*sliced_arguments)
+        # print '!', output
 
         outputs.append(output)
 

@@ -6,7 +6,7 @@ from .base import ParameterBasedLayer
 
 
 __all__ = ('ActivationLayer', 'Linear', 'Sigmoid', 'HardSigmoid', 'Step',
-           'Tanh', 'Relu', 'Softplus', 'Softmax')
+           'Tanh', 'Relu', 'Softplus', 'Softmax', 'Square')
 
 
 class LayerMeta(ConfigMeta):
@@ -54,14 +54,18 @@ class ActivationLayer(six.with_metaclass(LayerMeta, ParameterBasedLayer)):
 
     def output(self, input_value):
         if self.size is not None:
-            input_value = T.dot(input_value, self.weight) + self.bias
+            if self.dotdim is None:
+                input_value = T.tensordot(input_value, self.weight, axes = [input_value.ndim - 1, 0]) + self.bias
+            else:
+                input_value = T.tensordot(input_value, self.weight, axes = [self.dotdim + 1, 0]) + self.bias
+                if self.dotdim + 1 < input_value.ndim - 1:
+                    input_value = input_value.swapaxes(input_value.ndim - 1, self.dotdim + 1)
         return self.activation_function(input_value)
 
     def __repr__(self):
         if self.size is None:
             return super(ParameterBasedLayer, self).__repr__()
         return super(ActivationLayer, self).__repr__()
-
 
 class Linear(ActivationLayer):
     """ The layer with the linear activation function.
@@ -140,6 +144,8 @@ class Step(ActivationLayer):
     """
     activation_function = step_function
 
+class Square(ActivationLayer):
+    activation_function = (lambda x: x**2)
 
 class Tanh(ActivationLayer):
     """ The layer with the `tanh` activation function.

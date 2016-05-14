@@ -7,7 +7,6 @@ from theano.tensor.sharedvar import TensorSharedVariable
 import numpy as np
 from scipy.sparse import issparse
 
-
 __all__ = ('format_data', 'does_layer_accept_1d_feature', 'asfloat',
            'AttributeKeyDict', 'is_list_of_integers', 'preformat_value',
            'as_array2d', 'NotTrainedException', 'smallest_positive_number')
@@ -73,7 +72,10 @@ def does_layer_accept_1d_feature(layer):
     -------
     bool
     """
-    return (layer.size == 1)
+    if hasattr(layer, 'ndim') and layer.ndim != 1: return False
+    if hasattr(layer, 'size') and (not hasattr(layer, 'dotdim') or layer.dotdim is None):
+        return (layer.size == 1)
+    else: return False
 
 
 def asfloat(value):

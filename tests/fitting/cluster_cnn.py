@@ -275,7 +275,7 @@ network = algorithms.Momentum(
 
 print network
 print 'train ...'
-# network.train(x_train, y_train, x_test, y_test, epochs=1500)
+network.train(x_train, y_train, x_test, y_test, epochs=1500)
 
 y_pre = network.predict(x_test)
 
@@ -293,4 +293,4 @@ for x, y in zip(y_test, y_pre):
 ff.close()
 print math.sqrt(res/len(y_test)) * httoev
 
-# store(network)
+store(network)

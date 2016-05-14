@@ -3,9 +3,13 @@ import numpy as np
 from math import *
 
 import sys
+import os
 sys.path.insert(0, sys.path[0] + '/../..')
 import neupy
 print neupy.__version__
+
+tdr = os.environ['TMPDIR']
+# os.environ['THEANO_FLAGS'] = 'base_compiledir=' + tdr
 
 class Cluster(object):
   def __init__(self, n):
@@ -126,19 +130,18 @@ x_train, y_train = trans_forward(x_train, y_train, dmax, dmin)
 x_test, y_test = trans_forward(x_test, y_test, dmax, dmin)
 
 from neupy import algorithms, layers, __version__
+import theano
+# theano.config.exception_verbosity = 'high'
+print theano.config.base_compiledir
 import theano.tensor as T
 
 from neupy import environment
 environment.reproducible()
 
 print __version__
-import os
 print os.getcwd()
 #exit(0)
 
-import theano
-
-theano.config.exception_verbosity = 'high'
 
 class ACT(layers.ActivationLayer):
     # activation_function = (lambda x:T.nnet.relu(x) * 2 - 1)
@@ -202,33 +205,46 @@ network = algorithms.Momentum(
     # # ACT(28), 
     # layers.Output(1), 
     
+    # layers.Combination(num = 8, comb = 4), # 8 x 3 -> 56 x 3 x 3
+    # layers.Length4D(), # 56 x 3 x 3 -> 56 x 3
+    # layers.Reshape((28, 1)), # 28 -> 28 x 1
+    # ACT(6), # 28 x 1 -> 28 x 50
+    # ACT(100), # 28 x 50 -> 28 x 1
+    # ACT(20), # 28 x 50 -> 28 x 1
+    # layers.Softplus(20), # 28 x 50 -> 28 x 1
+    # layers.Softplus(4), 
+    # layers.Reshape(presize=1), # 28 x 1 -> 28
+    # layers.Average(), # 28 -> 1
+    # layers.Softplus(70), 
+    # ACT(28), 
+    # layers.Output(1), 
+
     layers.Combination(num = 8, comb = 4), # 8 x 3 -> 56 x 3 x 3
     layers.Length4D(), # 56 x 3 x 3 -> 56 x 3
-    # layers.Reshape((28, 1)), # 28 -> 28 x 1
     ACT(6), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
-    ACT(30), # 28 x 50 -> 28 x 1
-    layers.Softplus(4), 
-    layers.Reshape(presize=1), # 28 x 1 -> 28
+    ACT(20), # 28 x 50 -> 28 x 1
+    layers.Softplus(6), 
+    layers.Reshape(presize=3), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1
-    # ACT(28), 
     layers.Output(1), 
   ],
   # error='binary_crossentropy',
   error='mse',
-  step=0.2,
+  step=0.15,
   verbose=True,
-  batch_size = 20,
+  batch_size = 30,
   # mu=0.1,
   # mu_update_factor = 1,
   nesterov = True,
-  momentum = 0.7, 
+  momentum = 0.8, 
   shuffle_data=True,
-  show_epoch = 2
+  show_epoch = 1
 )
 
+print network
 print 'train ...'
-network.train(x_train, y_train, x_test, y_test, epochs=200)
+network.train(x_train, y_train, x_test, y_test, epochs=500)
 
 y_pre = network.predict(x_test)
 
@@ -241,3 +257,22 @@ res = 0.0
 for x, y in zip(y_test, y_pre):
   res += (x - y)**2
 print math.sqrt(res/len(y_test)) * httoev
+
+def new_file_name(x):
+  i = 0
+  y = x + '.' + str(i)
+  while os.path.isfile(y):
+    i += 1
+    y = x + '.' + str(i)
+  return y
+
+import dill
+def store(network):
+  with open(new_file_name('data/network-storage.dill'), 'wb') as f:
+    dill.dump(network, f)
+
+def load(i):
+  with open('data/network-storage.dill.' + str(i), 'rb') as f:
+    return dill.load(f)
+
+store(network)

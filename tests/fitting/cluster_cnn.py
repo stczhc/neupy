@@ -252,13 +252,13 @@ network = algorithms.Momentum(
     # layers.Average(), # 28 -> 1
     # layers.Output(1), 
     
-    layers.Combination(num = 8, comb = 8), # 8 x 3 -> 1 x 8 x 3
-    layers.Length(num = 8), # 1 x 8 x 3 -> 1 x 28
-    ACT(28), # 28 x 1 -> 28 x 50
+    layers.Combination(num = 8, comb = 5), # 8 x 3 -> 1 x 8 x 3
+    layers.Length(num = 5), # 1 x 8 x 3 -> 1 x 28
+    ACT(10), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
     ACT(50), # 28 x 50 -> 28 x 1
-    layers.Softplus(4), 
-    layers.Reshape(presize=4), # 28 x 1 -> 28
+    layers.Softplus(6), 
+    layers.Reshape(presize=2), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1
     layers.Output(1), 
   ],

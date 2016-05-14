@@ -173,7 +173,7 @@ class ACT(layers.ActivationLayer):
     # activation_function = (lambda x: (x/5)**2)
     # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
-load_i = 2
+load_i = -1
 print 'construct network ...'
 # network = algorithms.LevenbergMarquardt(
 # network = algorithms.MinibatchGradientDescent(
@@ -240,13 +240,23 @@ network = algorithms.Momentum(
     # ACT(28), 
     # layers.Output(1), 
 
-    layers.Combination(num = 8, comb = 4), # 8 x 3 -> 56 x 3 x 3
-    layers.Length4D(), # 56 x 3 x 3 -> 56 x 3
-    ACT(6), # 28 x 1 -> 28 x 50
+    # layers.Combination(num = 8, comb = 4), # 8 x 3 -> 56 x 3 x 3
+    # layers.Length4D(), # 56 x 3 x 3 -> 56 x 3
+    # ACT(6), # 28 x 1 -> 28 x 50
+    # ACT(100), # 28 x 50 -> 28 x 1
+    # ACT(50), # 28 x 50 -> 28 x 1
+    # layers.Softplus(4), 
+    # layers.Reshape(presize=2), # 28 x 1 -> 28
+    # layers.Average(), # 28 -> 1
+    # layers.Output(1), 
+    
+    layers.Combination(num = 8, comb = 8), # 8 x 3 -> 1 x 8 x 3
+    layers.Length(num = 8), # 1 x 8 x 3 -> 1 x 28
+    ACT(28), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
     ACT(50), # 28 x 50 -> 28 x 1
     layers.Softplus(4), 
-    layers.Reshape(presize=2), # 28 x 1 -> 28
+    layers.Reshape(presize=4), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1
     layers.Output(1), 
   ],

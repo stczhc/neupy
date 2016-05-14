@@ -4,7 +4,7 @@ import theano.tensor as T
 from neupy.core.properties import ProperFractionProperty, TypedListProperty, IntProperty
 from .base import BaseLayer
 
-__all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 'Length4D', 'Average')
+__all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 'Length4D', 'Length', 'Average')
 
 class Dropout(BaseLayer):
     """ Dropout layer
@@ -107,6 +107,27 @@ class Length4D(Reshape):
         le = [[1, -1, 0, 0], [1, 0, -1, 0], [1, 0, 0, -1], 
             [0, 1, -1, 0], [0, 1, 0, -1], [0, 0, 1, -1]]
         le = T.as_tensor_variable(np.asarray(le).T)
+        if input_value.ndim == 3:
+            return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
+        elif input_value.ndim == 4:
+            return T.tensordot(input_value, le, axes = [2, 0]).norm(2, axis = 2)
+
+class Length(Reshape):
+    num = IntProperty()
+    def __init__(self, num=None, **options):
+        if num is not None:
+            options['num'] = num
+        super(Length, self).__init__(**options)
+    
+    def output(self, input_value):
+        le = np.zeros((self.num * (self.num - 1) / 2, self.num), dtype=np.int)
+        k = 0
+        for i in range(0, self.num):
+            for j in range(0, i):
+                le[k, i] = 1
+                le[k, j] = -1
+                k += 1
+        le = T.as_tensor_variable(le)
         if input_value.ndim == 3:
             return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
         elif input_value.ndim == 4:

@@ -120,6 +120,26 @@ def trans_backward(x, y, dmax, dmin):
   y = y * (dmax[1] - dmin[1]) + dmin[1]
   return x, y
 
+def new_file_name(x):
+  i = 0
+  y = x + '.' + str(i)
+  while os.path.isfile(y):
+    i += 1
+    y = x + '.' + str(i)
+  return y
+
+import dill
+def store(network):
+  c = new_file_name('data/network-storage.dill')
+  print 'dump at ' + c
+  with open(c, 'wb') as f:
+    dill.dump(network, f)
+
+def load(i):
+  print 'load at ' + 'data/network-storage.dill.' + str(i)
+  with open('data/network-storage.dill.' + str(i), 'rb') as f:
+    return dill.load(f)
+
 print 'load data ...'
 x_train, y_train = load_data(60000)
 x_test, y_test = load_data(10000)
@@ -153,6 +173,7 @@ class ACT(layers.ActivationLayer):
     # activation_function = (lambda x: (x/5)**2)
     # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
+load_i = 2
 print 'construct network ...'
 # network = algorithms.LevenbergMarquardt(
 # network = algorithms.MinibatchGradientDescent(
@@ -223,9 +244,9 @@ network = algorithms.Momentum(
     layers.Length4D(), # 56 x 3 x 3 -> 56 x 3
     ACT(6), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
-    ACT(20), # 28 x 50 -> 28 x 1
-    layers.Softplus(6), 
-    layers.Reshape(presize=3), # 28 x 1 -> 28
+    ACT(50), # 28 x 50 -> 28 x 1
+    layers.Softplus(4), 
+    layers.Reshape(presize=2), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1
     layers.Output(1), 
   ],
@@ -240,11 +261,11 @@ network = algorithms.Momentum(
   momentum = 0.8, 
   shuffle_data=True,
   show_epoch = 1
-)
+) if load_i == -1 else load(load_i)
 
 print network
 print 'train ...'
-network.train(x_train, y_train, x_test, y_test, epochs=500)
+# network.train(x_train, y_train, x_test, y_test, epochs=1500)
 
 y_pre = network.predict(x_test)
 
@@ -254,25 +275,12 @@ x_test, y_test = trans_backward(x_test, y_test, dmax, dmin)
 import math
 httoev = 27.21138505
 res = 0.0
+ff = open('data/fitenergy.txt', 'w')
 for x, y in zip(y_test, y_pre):
+  print x, y
+  ff.write('%15.6f %15.6f\n' % (x, y[0]))
   res += (x - y)**2
+ff.close()
 print math.sqrt(res/len(y_test)) * httoev
 
-def new_file_name(x):
-  i = 0
-  y = x + '.' + str(i)
-  while os.path.isfile(y):
-    i += 1
-    y = x + '.' + str(i)
-  return y
-
-import dill
-def store(network):
-  with open(new_file_name('data/network-storage.dill'), 'wb') as f:
-    dill.dump(network, f)
-
-def load(i):
-  with open('data/network-storage.dill.' + str(i), 'rb') as f:
-    return dill.load(f)
-
-store(network)
+# store(network)

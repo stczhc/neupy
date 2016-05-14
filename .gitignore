@@ -30,3 +30,5 @@ site/source/docs/*
 site/build/*
 
 data/
+*.sh
+*.tmp

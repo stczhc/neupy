@@ -77,7 +77,9 @@ def read_cluster(ener, xyz):
       clu.atoms[i] = ar
       i = i + 1
     clu.center()
-    clul.append(clu)
+    if clu.energy < -954.46:
+      clul.append(clu)
+  print 'struct loaded: ', len(clul)
   return clul
 
 def load_data(n):

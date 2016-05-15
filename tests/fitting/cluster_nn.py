@@ -129,10 +129,10 @@ def load_data(clus, n, num=None):
   x_d = []
   y_d = []
   for i in xrange(0, n):
-    idx = np.random.randint(len(clus))
+    print i; idx = np.random.randint(len(clus))
     clu = clus[idx]
     clu.shuffle()
-    x_d.append(clu.get_lengths_x(num))
+    x_d.append(clu.get_lengths_sp(num))
     y_d.append(clu.energy)
   y_d = np.array(y_d)
   x_d = np.asarray(x_d)
@@ -213,7 +213,7 @@ load_i = -1
 print 'construct network ...'
 network = algorithms.Momentum(
   [
-    ACT(10, ndim=3), # 28 x 1 -> 28 x 50
+    ACT(60, ndim=3), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
     ACT(50), # 28 x 50 -> 28 x 1
     layers.Softplus(6), 

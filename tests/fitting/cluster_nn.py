@@ -248,6 +248,7 @@ network = algorithms.Momentum(
   nesterov = True,
   momentum = 0.8, 
   shuffle_data=True,
+  decay_rate = 0.0001, 
   show_epoch = 5
 ) if load_i == -1 else load(load_i)
 

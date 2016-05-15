@@ -4,7 +4,8 @@ import theano.tensor as T
 from neupy.core.properties import ProperFractionProperty, TypedListProperty, IntProperty
 from .base import BaseLayer
 
-__all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 'Length4D', 'Length', 'Average')
+__all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 
+    'Length4D', 'Length', 'Length2', 'Average')
 
 class Dropout(BaseLayer):
     """ Dropout layer
@@ -132,6 +133,10 @@ class Length(Reshape):
             return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
         elif input_value.ndim == 4:
             return T.tensordot(input_value, le, axes = [2, 0]).norm(2, axis = 2)
+
+class Length2(Length):
+    def output(self, input_value):
+        return super(Length2, self).output(input_value)**2
 
 class Average(Reshape):
     def output(self, input_value):

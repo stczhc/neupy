@@ -175,7 +175,7 @@ class ACT(layers.ActivationLayer):
     # activation_function = (lambda x: (x/5)**2)
     # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
-load_i = 4
+load_i = -1
 print 'construct network ...'
 # network = algorithms.LevenbergMarquardt(
 # network = algorithms.MinibatchGradientDescent(
@@ -253,7 +253,7 @@ network = algorithms.Momentum(
     # layers.Output(1), 
     
     layers.Combination(num = 8, comb = 5), # 8 x 3 -> 1 x 8 x 3
-    layers.Length(num = 5), # 1 x 8 x 3 -> 1 x 28
+    layers.Length2(num = 5), # 1 x 8 x 3 -> 1 x 28
     ACT(10), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
     ACT(50), # 28 x 50 -> 28 x 1

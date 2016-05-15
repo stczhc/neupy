@@ -226,6 +226,7 @@ class ACT(layers.ActivationLayer):
 
 load_i = -1
 print 'construct network ...'
+algorithms.WeightDecay.decay_rate = 0.05
 network = algorithms.Momentum(
   [
     ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
@@ -243,6 +244,7 @@ network = algorithms.Momentum(
   batch_size = 20,
   # mu=0.1,
   # mu_update_factor = 1,
+  addons=[algorithms.WeightDecay], 
   nesterov = True,
   momentum = 0.8, 
   shuffle_data=True,

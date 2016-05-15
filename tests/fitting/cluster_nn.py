@@ -226,12 +226,11 @@ class ACT(layers.ActivationLayer):
 
 load_i = -1
 print 'construct network ...'
-algorithms.WeightDecay.decay_rate = 0.00
 network = algorithms.Momentum(
   [
     ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
-    ACT(40), # 28 x 50 -> 28 x 1
-    ACT(100), # 28 x 50 -> 28 x 1
+    ACT(70), # 28 x 50 -> 28 x 1
+    ACT(120), # 28 x 50 -> 28 x 1
     layers.Softplus(6), 
     layers.Reshape(presize=2), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1
@@ -244,11 +243,11 @@ network = algorithms.Momentum(
   batch_size = 20,
   # mu=0.1,
   # mu_update_factor = 1,
-  addons=[algorithms.WeightDecay], 
+  # addons=[algorithms.WeightDecay], 
   nesterov = True,
   momentum = 0.8, 
   shuffle_data=True,
-  decay_rate = 0.0001, 
+  # decay_rate = 0.0001, 
   show_epoch = 5
 ) if load_i == -1 else load(load_i)
 

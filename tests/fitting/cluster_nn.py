@@ -36,7 +36,7 @@ class Cluster(object):
       self.mat_f.append(lambda x,le=le: np.dot(le, x))
       self.mat_x.append(lx)
 
-  def gen_ll():
+  def gen_ll(self):
     ll = np.zeros((self.n, self.n))
     for i in range(0, self.n):
       for j in range(0, i):

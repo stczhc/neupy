@@ -175,7 +175,7 @@ class ACT(layers.ActivationLayer):
     # activation_function = (lambda x: (x/5)**2)
     # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
-load_i = -1
+load_i = 4
 print 'construct network ...'
 # network = algorithms.LevenbergMarquardt(
 # network = algorithms.MinibatchGradientDescent(
@@ -266,18 +266,18 @@ network = algorithms.Momentum(
   error='mse',
   step=0.15,
   verbose=True,
-  batch_size = 30,
+  batch_size = 20,
   # mu=0.1,
   # mu_update_factor = 1,
   nesterov = True,
   momentum = 0.8, 
   shuffle_data=True,
-  show_epoch = 5
+  show_epoch = 1
 ) if load_i == -1 else load(load_i)
 
 print network
 print 'train ...'
-network.train(x_train, y_train, x_test, y_test, epochs=1500)
+network.train(x_train, y_train, x_test, y_test, epochs=1000)
 
 y_pre = network.predict(x_test)
 
@@ -289,7 +289,7 @@ httoev = 27.21138505
 res = 0.0
 ff = open('data/fitenergy.txt', 'w')
 for x, y in zip(y_test, y_pre):
-  print x, y
+  # print x, y
   ff.write('%15.6f %15.6f\n' % (x, y[0]))
   res += (x - y)**2
 ff.close()

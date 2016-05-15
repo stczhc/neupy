@@ -104,7 +104,7 @@ class Cluster(object):
     self.atoms = self.atoms.dot(r.T)
 
 def read_cluster(ener, xyz, traj=False):
-  max_energy = -954.46
+  max_energy = -954.6
   f = open(ener, 'r')
   fs = f.readlines()
   f.close()
@@ -152,7 +152,7 @@ def load_data(clus, n, num=None):
   return x_d, y_d
 
 def find_max_min(clus):
-  ratio = 0.1
+  ratio = 0.05
   x_train = np.asarray([x.atoms for x in clus])
   y_train = np.asarray([x.energy for x in clus])
   dmax = [np.ma.max(x_train), np.ma.max(y_train)]

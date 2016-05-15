@@ -192,7 +192,7 @@ def load(i):
     return dill.load(f)
 
 print 'load data ...'
-clus = read_cluster('./data/energyx.txt', './data/ck_structs/pos_#.xyz')
+clus = read_cluster('./data/tm_pt8/list.txt', './data/tm_pt8/structs/final_#.xyz', traj=True)
 dmax, dmin = find_max_min(clus)
 trans_forward(clus, dmax, dmin)
 random.shuffle(clus)
@@ -241,7 +241,7 @@ network = algorithms.Momentum(
   nesterov = True,
   momentum = 0.8, 
   shuffle_data=True,
-  show_epoch = 10
+  show_epoch = 5
 ) if load_i == -1 else load(load_i)
 
 print network

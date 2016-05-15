@@ -35,6 +35,8 @@ class Cluster(object):
       lx = np.asarray(lx)
       self.mat_f.append(lambda x,le=le: np.dot(le, x))
       self.mat_x.append(lx)
+
+  def gen_ll():
     ll = np.zeros((self.n, self.n))
     for i in range(0, self.n):
       for j in range(0, i):
@@ -138,7 +140,7 @@ def load_data(clus, n, num=None):
     idx = np.random.randint(len(clus))
     clu = clus[idx]
     clu.shuffle()
-    x_d.append(clu.get_lengths_sp(num))
+    x_d.append(clu.get_lengths_x(num))
     y_d.append(clu.energy)
   y_d = np.array(y_d)
   x_d = np.asarray(x_d)
@@ -194,9 +196,10 @@ clus = read_cluster('./data/energyx.txt', './data/ck_structs/pos_#.xyz')
 dmax, dmin = find_max_min(clus)
 trans_forward(clus, dmax, dmin)
 random.shuffle(clus)
+for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
-x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 60000, num=5)
-x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
+x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 10000, num=5)
+x_test, y_test = load_data(clus[int(len(clus)*ratio):], 2000, num=5)
 
 from neupy import algorithms, layers, __version__
 
@@ -243,7 +246,8 @@ network = algorithms.Momentum(
 
 print network
 print 'train ...'
-# network.train(x_train, y_train, x_test, y_test, epochs=1000)
+print x_train[0], y_train[0]
+network.train(x_train, y_train, x_test, y_test, epochs=1000)
 
 y_pre = network.predict(x_test)
 

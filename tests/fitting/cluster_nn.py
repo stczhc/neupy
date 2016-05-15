@@ -50,7 +50,11 @@ class Cluster(object):
       lc = []
       for i in range(0, num):
         for j in range(0, i):
-          lc.append(np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]))
+          lc.append(exp(-np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]])/5.0))
+      nr = len(lc)
+      for i in range(0, nr):
+        for j in range(0, i):
+          lc.append(lc[i]*lc[j])
       ll.append(lc)
     return ll
   
@@ -170,8 +174,8 @@ def load_data_cmp(clus, n, num=None):
   for i in xrange(0, n):
     if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
     mm = 0.01
-    idx = np.random.randint(2)
-    if idx == 0:
+    idxg = np.random.randint(2)
+    if idxg == 0:
       # while mm < 0.4:
       #   idx = np.random.randint(len(clus))
       #   clu = clus[idx]
@@ -196,15 +200,16 @@ def load_data_cmp(clus, n, num=None):
       while plx in pll:
         random.shuffle(plx)
       x_d.append([pll[0], plx])
-      y_d.append([1,0])
+      y_d.append([1,0]) # different
     else:
       idx = np.random.randint(len(clus))
       clu = clus[idx]
       clu.shuffle(num)
       pll = clu.gen_per_ll(num)
       idx = np.random.randint(len(pll) - 1) + 1
-      x_d.append([pll[0], pll[idx]])
-      y_d.append([0,1])
+      if idxg == 1:
+        x_d.append([pll[0], pll[idx]])
+      y_d.append([0,1]) # the same
   y_d = np.array(y_d)
   x_d = np.asarray(x_d)
   return x_d, y_d
@@ -264,8 +269,8 @@ random.shuffle(clus)
 for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
 if lcmp:
-  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 1000, num=5)
-  x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 2000, num=5)
+  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 10000, num=5)
+  x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 1000, num=5)
 else:
   x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
   x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
@@ -290,8 +295,8 @@ class ACT(layers.ActivationLayer):
     # activation_function = (lambda x: (x/5)**2)
     # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
-load_i = 11
-load_sim = True
+load_i = -1
+load_sim = False
 print 'construct network ...'
 if not lcmp:
   network = algorithms.Momentum(
@@ -343,31 +348,6 @@ else:
     # decay_rate = 0.0001, 
     show_epoch = 2
   ) if load_i == -1 else load(load_i)
-  if load_sim:
-    network2 = algorithms.Momentum(
-      [
-        ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
-        ACT(100), 
-        layers.SquareNorm(presize=50), 
-        layers.Reshape(), 
-        layers.Tanh(1), 
-        layers.Softmax(2), 
-        layers.ArgmaxOutput(2), 
-      ],
-      # error='binary_crossentropy',
-      error='mse',
-      step=0.005,
-      verbose=True,
-      batch_size = 10,
-      # mu=0.1,
-      # mu_update_factor = 1,
-      # addons=[algorithms.WeightDecay], 
-      nesterov = True,
-      momentum = 0.8, 
-      shuffle_data=True,
-      # decay_rate = 0.0001, 
-      show_epoch = 2
-    )
 
 print network
 print 'train ...'
@@ -376,18 +356,13 @@ if lcmp:
 else:
   print (x_train[0], y_train[0])
 if not load_sim:
-  network.train(x_train, y_train, x_test, y_test, epochs=300)
+  network.train(x_train, y_train, x_test, y_test, epochs=100)
 
-network2.layers[0].weight = network.layers[0].weight
-network2.layers[0].bias = network.layers[0].bias
-network2.layers[1].weight = network.layers[1].weight
-network2.layers[1].bias = network.layers[1].bias
-network2.layers[4].weight = network.layers[4].weight
-network2.layers[4].bias = network.layers[4].bias
-network2.layers[5].weight = network.layers[5].weight
-network2.layers[5].bias = network.layers[5].bias
 y_pre = network.predict(x_test)
-y_pre2 = network2.predict(x_test)
+input_data = network.format_input_data(x_test)
+f = theano.function(inputs=[network.variables.network_input],
+  outputs=network.layers[2].prediction)
+y_pre2 = f(input_data)
 
 if not lcmp:
   y_pre = trans_backward_y(y_pre, dmax, dmin)

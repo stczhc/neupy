@@ -76,13 +76,13 @@ class Cluster(object):
       n = len(r[k])
       for i in range(1, n + 1):
         le = [list(g) for g in itertools.combinations(range(0, n), i)]
-        r = 0.0
+        rx = 0.0
         for j in le:
           tk = 1.0
           for m in j:
             tk *= r[k][m]
-          r += tk
-        p[k].append(r)
+          rx += tk
+        p[k].append(rx)
     return np.asarray(p)
   
   def get_lengths_sp(self, num=None):

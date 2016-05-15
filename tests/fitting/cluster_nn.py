@@ -226,7 +226,7 @@ class ACT(layers.ActivationLayer):
 
 load_i = -1
 print 'construct network ...'
-algorithms.WeightDecay.decay_rate = 0.05
+algorithms.WeightDecay.decay_rate = 0.00
 network = algorithms.Momentum(
   [
     ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50

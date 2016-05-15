@@ -264,7 +264,7 @@ random.shuffle(clus)
 for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
 if lcmp:
-  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 20000, num=5)
+  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 1000, num=5)
   x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 2000, num=5)
 else:
   x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
@@ -349,7 +349,10 @@ else:
         ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
         ACT(100), 
         layers.SquareNorm(presize=50), 
-        layers.Output(1), 
+        layers.Reshape(), 
+        layers.Tanh(1), 
+        layers.Softmax(2), 
+        layers.ArgmaxOutput(2), 
       ],
       # error='binary_crossentropy',
       error='mse',
@@ -365,11 +368,6 @@ else:
       # decay_rate = 0.0001, 
       show_epoch = 2
     )
-    network2.layers[0].weight = network.layers[0].weight
-    network2.layers[0].bias = network.layers[0].bias
-    network2.layers[1].weight = network.layers[1].weight
-    network2.layers[1].bias = network.layers[1].bias
-    network = network2
 
 print network
 print 'train ...'
@@ -380,7 +378,16 @@ else:
 if not load_sim:
   network.train(x_train, y_train, x_test, y_test, epochs=300)
 
+network2.layers[0].weight = network.layers[0].weight
+network2.layers[0].bias = network.layers[0].bias
+network2.layers[1].weight = network.layers[1].weight
+network2.layers[1].bias = network.layers[1].bias
+network2.layers[4].weight = network.layers[4].weight
+network2.layers[4].bias = network.layers[4].bias
+network2.layers[5].weight = network.layers[5].weight
+network2.layers[5].bias = network.layers[5].bias
 y_pre = network.predict(x_test)
+y_pre2 = network2.predict(x_test)
 
 if not lcmp:
   y_pre = trans_backward_y(y_pre, dmax, dmin)
@@ -392,11 +399,12 @@ res = 0.0
 ff = open('data/fitenergy.txt', 'w')
 ntotal = len(y_pre)
 nr = 0
-for x, y in zip(y_test, y_pre):
+for x, y, y2 in zip(y_test, y_pre, y_pre2):
   # if lcmp: y = [y,1] if y > 0.5 else [y,0]
-  if lcmp: print x, y
+  if lcmp: print x, y, y2
   if lcmp:
-    if x[y] == 1: nr += 1
+    if not load_sim:
+      if x[y] == 1: nr += 1
   if not lcmp: ff.write('%15.6f %15.6f\n' % (x, y[0]))
   # if lcmp: ff.write('%15.6f %15.6f\n' % (x[0], y[0]))
   if not lcmp: res += (x - y[0])**2

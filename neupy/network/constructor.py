@@ -263,6 +263,7 @@ class ConstructableNetwork(SupervisedLearning, BaseNetwork):
         for layer in self.layers:
             if not isinstance(layer, Dropout):
                 prediction = layer.output(prediction)
+                layer.prediction = prediction
             train_prediction = layer.output(train_prediction)
 
         self.variables.update(

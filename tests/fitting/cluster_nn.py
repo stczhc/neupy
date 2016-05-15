@@ -203,8 +203,8 @@ trans_forward(clus, dmax, dmin)
 random.shuffle(clus)
 for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
-x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 10000, num=5)
-x_test, y_test = load_data(clus[int(len(clus)*ratio):], 2000, num=5)
+x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
+x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
 
 from neupy import algorithms, layers, __version__
 
@@ -248,7 +248,7 @@ network = algorithms.Momentum(
   momentum = 0.8, 
   shuffle_data=True,
   # decay_rate = 0.0001, 
-  show_epoch = 5
+  show_epoch = 2
 ) if load_i == -1 else load(load_i)
 
 print network

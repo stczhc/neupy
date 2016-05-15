@@ -230,7 +230,7 @@ network = algorithms.Momentum(
   [
     ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
     ACT(120), # 28 x 50 -> 28 x 1
-    ACT(80), # 28 x 50 -> 28 x 1
+    ACT(50), # 28 x 50 -> 28 x 1
     layers.Softplus(10), 
     layers.Reshape(presize=4), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1
@@ -240,7 +240,7 @@ network = algorithms.Momentum(
   error='mse',
   step=0.1,
   verbose=True,
-  batch_size = 20,
+  batch_size = 100,
   # mu=0.1,
   # mu_update_factor = 1,
   # addons=[algorithms.WeightDecay], 

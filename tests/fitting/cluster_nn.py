@@ -61,6 +61,30 @@ class Cluster(object):
           r[k].append(ll[xx[k, i], xx[k, j]])
     return np.asarray(r)
   
+  def get_lengths_pip(self, num=None):
+    if num is None: num = self.n
+    xx = self.mat_x[num - 1]
+    ll = self.mat_ll
+    r = []
+    p = []
+    for k in range(0, xx.shape[0]):
+      r.append([])
+      for i in range(0, xx.shape[1]):
+        for j in range(0, i):
+          r[k].append(ll[xx[k, i], xx[k, j]])
+      p.append([])
+      n = len(r[k])
+      for i in range(1, n + 1):
+        le = [list(g) for g in itertools.combinations(range(0, n), i)]
+        r = 0.0
+        for j in le:
+          tk = 1.0
+          for m in j:
+            tk *= r[k][m]
+          r += tk
+        p[k].append(r)
+    return np.asarray(p)
+  
   def get_lengths_sp(self, num=None):
     if num is None: num = self.n
     ll = self.mat_ll
@@ -145,7 +169,7 @@ def load_data(clus, n, num=None):
     idx = np.random.randint(len(clus))
     clu = clus[idx]
     clu.shuffle()
-    x_d.append(clu.get_lengths_x(num))
+    x_d.append(clu.get_lengths_pip(num))
     y_d.append(clu.energy)
   y_d = np.array(y_d)
   x_d = np.asarray(x_d)

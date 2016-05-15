@@ -192,7 +192,8 @@ class ParameterBasedLayer(BaseLayer):
 
     def __repr__(self):
         classname = self.__class__.__name__
-        return '{name}({size})'.format(name=classname, size=self.size)
+        return '{name}({size},presize={presize},ndim={ndim},dotdim={dotdim})'.format(name=classname, 
+          size=self.size, presize=self.presize, ndim=self.ndim, dotdim=self.dotdim)
 
 class FeatureParameterBasedLayer(ParameterBasedLayer):
     """parameter layer including shared weights and bias and future map

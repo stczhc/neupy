@@ -85,6 +85,13 @@ class Reshape(BaseLayer):
             output_shape = (input_shape,) + new_feature_shape
 
         return T.reshape(input_value, output_shape)
+    
+    def __repr__(self):
+        return "{name}(shape={shape},presize={presize})".format(
+            name=self.__class__.__name__,
+            shape=self.shape, 
+            presize=self.presize
+        )
 
 class Length2D(Reshape):
     def output(self, input_value):
@@ -133,6 +140,13 @@ class Length(Reshape):
             return T.tensordot(input_value, le, axes = [1, 0]).norm(2, axis = 1)
         elif input_value.ndim == 4:
             return T.tensordot(input_value, le, axes = [2, 0]).norm(2, axis = 2)
+    
+    def __repr__(self):
+        return "{name}(num={num},presize={presize})".format(
+            name=self.__class__.__name__,
+            num=self.num, 
+            presize=self.presize
+        )
 
 class Length2(Length):
     def output(self, input_value):

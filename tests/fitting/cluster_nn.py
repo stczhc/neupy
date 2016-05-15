@@ -25,12 +25,21 @@ class Cluster(object):
     self.elems = [''] * n
     self.energy = 0.0
     self.mat_f = []
+    self.mat_x = []
+    self.mat_ll = []
     ee = np.eye(n, dtype=int)
-    x = T.dmatrix('x')
     for i in range(1, n + 1):
       le = [list(g) for g in itertools.combinations(ee, i)]
+      lx = [list(g) for g in itertools.combinations(range(0, n), i)]
       le = np.asarray(le)
+      lx = np.asarray(lx)
       self.mat_f.append(lambda x,le=le: np.dot(le, x))
+      self.mat_x.append(lx)
+    ll = np.zeros((self.n, self.n))
+    for i in range(0, self.n):
+      for j in range(0, i):
+        ll[i, j] = np.linalg.norm(self.atoms[i] - self.atoms[j])
+    self.mat_ll = ll
   
   def get_center(self):
     return np.average(self.atoms, axis = 0)
@@ -40,39 +49,35 @@ class Cluster(object):
   
   def get_lengths_x(self, num=None):
     if num is None: num = self.n
-    ll = []
-    xx = self.mat_f[num - 1](self.atoms)
+    xx = self.mat_x[num - 1]
+    ll = self.mat_ll
     r = []
     for k in range(0, xx.shape[0]):
       r.append([])
       for i in range(0, xx.shape[1]):
         for j in range(0, i):
-          r[k].append(np.linalg.norm(xx[k, i] - xx[k, j]))
+          r[k].append(ll[xx[k, i], xx[k, j]])
     return np.asarray(r)
   
   def get_lengths_sp(self, num=None):
     if num is None: num = self.n
-    ll = []
-    xx = self.mat_f[num - 1](self.atoms)
+    ll = self.mat_ll
+    xx = self.mat_x[num - 1]
     r = []
     for l in range(0, xx.shape[0]):
       r.append([])
       for i in range(0, xx.shape[1]):
         for j in range(0, i):
-          lij = np.linalg.norm(xx[l, i] - xx[l, j])
+          lij = ll[xx[l, i], xx[l, j]]
           for k in range(0, j):
-            lik = np.linalg.norm(xx[l, i] - xx[l, k])
-            ljk = np.linalg.norm(xx[l, j] - xx[l, k])
+            lik = ll[xx[l, i], xx[l, k]]
+            ljk = ll[xx[l, j], xx[l, k]]
             r[l] += [lij + lik, lij + ljk, lik + ljk, 
               lij * lik, lij * ljk, lik * ljk]
     return np.asarray(r)
   
   def get_lengths(self):
-    ll = []
-    for i in range(0, self.n):
-      for j in range(0, i):
-        ll.append(np.linalg.norm(self.atoms[i]-self.atoms[j]))
-    return np.asarray(ll)
+    return self.get_lengths_x()
   
   def center(self):
     self.atoms = self.atoms - self.get_center()
@@ -129,7 +134,8 @@ def load_data(clus, n, num=None):
   x_d = []
   y_d = []
   for i in xrange(0, n):
-    print i; idx = np.random.randint(len(clus))
+    if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
+    idx = np.random.randint(len(clus))
     clu = clus[idx]
     clu.shuffle()
     x_d.append(clu.get_lengths_sp(num))
@@ -161,7 +167,7 @@ def trans_backward(clus, dmax, dmin):
     c.energy = c.energy * (dmax[1] - dmin[1]) + dmin[1]
 
 def trans_backward_y(y, dmax, dmin):
-  y = y * (dmax[1] - dmin[1]) + dmin[1]
+  return y * (dmax[1] - dmin[1]) + dmin[1]
 
 def new_file_name(x):
   i = 0
@@ -188,8 +194,9 @@ clus = read_cluster('./data/energyx.txt', './data/ck_structs/pos_#.xyz')
 dmax, dmin = find_max_min(clus)
 trans_forward(clus, dmax, dmin)
 random.shuffle(clus)
-x_train, y_train = load_data(clus[1:len(clus)*5/6], 6000, num=5)
-x_test, y_test = load_data(clus[len(clus)*5/6:], 1000, num=5)
+ratio = 9.0 / 10.0
+x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 60000, num=5)
+x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
 
 from neupy import algorithms, layers, __version__
 
@@ -213,7 +220,7 @@ load_i = -1
 print 'construct network ...'
 network = algorithms.Momentum(
   [
-    ACT(60, ndim=3), # 28 x 1 -> 28 x 50
+    ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
     ACT(100), # 28 x 50 -> 28 x 1
     ACT(50), # 28 x 50 -> 28 x 1
     layers.Softplus(6), 
@@ -236,7 +243,7 @@ network = algorithms.Momentum(
 
 print network
 print 'train ...'
-network.train(x_train, y_train, x_test, y_test, epochs=1000)
+# network.train(x_train, y_train, x_test, y_test, epochs=1000)
 
 y_pre = network.predict(x_test)
 

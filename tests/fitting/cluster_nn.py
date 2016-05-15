@@ -230,8 +230,8 @@ algorithms.WeightDecay.decay_rate = 0.05
 network = algorithms.Momentum(
   [
     ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
+    ACT(40), # 28 x 50 -> 28 x 1
     ACT(100), # 28 x 50 -> 28 x 1
-    ACT(50), # 28 x 50 -> 28 x 1
     layers.Softplus(6), 
     layers.Reshape(presize=2), # 28 x 1 -> 28
     layers.Average(), # 28 -> 1

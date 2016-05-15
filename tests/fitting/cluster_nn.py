@@ -103,7 +103,8 @@ class Cluster(object):
       cos(theta) + u[2]**2 * (1 - cos(theta))]])
     self.atoms = self.atoms.dot(r.T)
 
-def read_cluster(ener, xyz):
+def read_cluster(ener, xyz, traj=False):
+  max_energy = -954.46
   f = open(ener, 'r')
   fs = f.readlines()
   f.close()
@@ -118,17 +119,21 @@ def read_cluster(ener, xyz):
     fs = f.readlines()
     f.close()
     fs = [[g for g in f.replace('\n', '').split(' ') if len(g) != 0] for f in fs]
-    clu = Cluster(int(fs[0][0]))
-    i = 0
-    clu.energy = l[1]
-    for f in fs[2:]:
-      clu.elems[i] = f[0]
-      ar = np.asarray([float(g) for g in f[1:]])
-      clu.atoms[i] = ar
-      i = i + 1
-    clu.center()
-    if clu.energy < -954.46:
-      clul.append(clu)
+    cc = 0
+    while cc < len(fs):
+      cn = int(fs[cc][0])
+      clu = Cluster(cn)
+      i = 0
+      clu.energy = float(fs[cc+1][2]) if traj else l[1]
+      for f in fs[cc+2:cc+2+cn]:
+        clu.elems[i] = f[0]
+        ar = np.asarray([float(g) for g in f[1:4]])
+        clu.atoms[i] = ar
+        i = i + 1
+      clu.center()
+      if clu.energy < max_energy:
+        clul.append(clu)
+      cc += 2 + cn
   print 'struct loaded: ', len(clul)
   return clul
 

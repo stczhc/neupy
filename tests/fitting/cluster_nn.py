@@ -58,7 +58,7 @@ class Cluster(object):
       r.append([])
       for i in range(0, xx.shape[1]):
         for j in range(0, i):
-          r[k].append(exp(-ll[xx[k, i], xx[k, j]]/2.0))
+          r[k].append(exp(-ll[xx[k, i], xx[k, j]]/5.0))
     return np.asarray(r)
   
   def get_lengths_sp(self, num=None):
@@ -165,12 +165,12 @@ def find_max_min(clus):
 
 def trans_forward(clus, dmax, dmin):
   for c in clus:
-    c.atoms = (c.atoms - dmin[0]) / (dmax[0] - dmin[0])
+    # c.atoms = (c.atoms - dmin[0]) / (dmax[0] - dmin[0])
     c.energy = (c.energy - dmin[1]) / (dmax[1] - dmin[1])
 
 def trans_backward(clus, dmax, dmin):
   for c in clus:
-    c.atoms = c.atoms * (dmax[0] - dmin[0]) + dmin[0]
+    # c.atoms = c.atoms * (dmax[0] - dmin[0]) + dmin[0]
     c.energy = c.energy * (dmax[1] - dmin[1]) + dmin[1]
 
 def trans_backward_y(y, dmax, dmin):

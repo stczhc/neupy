@@ -43,6 +43,17 @@ class Cluster(object):
         ll[i, j] = np.linalg.norm(self.atoms[i] - self.atoms[j])
     self.mat_ll = ll
   
+  def gen_per_ll(self, num):
+    lx = [list(g) for g in itertools.permutations(range(0, num))]
+    ll = []
+    for g in lx:
+      lc = []
+      for i in range(0, num):
+        for j in range(0, i):
+          lc.append(np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]))
+      ll.append(lc)
+    return ll
+  
   def get_center(self):
     return np.average(self.atoms, axis = 0)
   
@@ -84,8 +95,9 @@ class Cluster(object):
   def center(self):
     self.atoms = self.atoms - self.get_center()
   
-  def shuffle(self):
-    np.random.shuffle(self.atoms)
+  def shuffle(self, pre=None):
+    if pre is None: pre = len(self.atoms)
+    np.random.shuffle(self.atoms[0:pre])
   
   def rotate(self):
     theta = np.random.random() * 2.0 * pi
@@ -145,8 +157,54 @@ def load_data(clus, n, num=None):
     idx = np.random.randint(len(clus))
     clu = clus[idx]
     clu.shuffle()
+    clu.gen_ll()
     x_d.append(clu.get_lengths_x(num))
     y_d.append(clu.energy)
+  y_d = np.array(y_d)
+  x_d = np.asarray(x_d)
+  return x_d, y_d
+
+def load_data_cmp(clus, n, num=None):
+  x_d = []
+  y_d = []
+  for i in xrange(0, n):
+    if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
+    mm = 0.01
+    idx = np.random.randint(2)
+    if idx == 0:
+      # while mm < 0.4:
+      #   idx = np.random.randint(len(clus))
+      #   clu = clus[idx]
+      #   idx = np.random.randint(len(clus))
+      #   clu2 = clus[idx]
+      #   mm = abs(clu2.energy - clu.energy)
+      # clu.shuffle(num)
+      # clu2.shuffle(num)
+      # clu.gen_ll()
+      # clu2.gen_ll()
+      # a = clu.get_lengths_x(num)[0]
+      # b = clu2.get_lengths_x(num)[0]
+      # x_d.append([a, b])
+      # y_d.append(1)
+      idx = np.random.randint(len(clus))
+      clu = clus[idx]
+      clu.shuffle(num)
+      pll = clu.gen_per_ll(num)
+      idx = np.random.randint(len(pll))
+      plx = [x for x in pll[idx]]
+      random.shuffle(plx)
+      while plx in pll:
+        random.shuffle(plx)
+      x_d.append([pll[0], plx])
+      y_d.append([1,0])
+    else:
+      idx = np.random.randint(len(clus))
+      clu = clus[idx]
+      clu.shuffle(num)
+      pll = clu.gen_per_ll(num)
+      idx = np.random.randint(len(pll) - 1) + 1
+      x_d.append([pll[0], pll[idx]])
+      y_d.append([0,1])
   y_d = np.array(y_d)
   x_d = np.asarray(x_d)
   return x_d, y_d
@@ -197,14 +255,22 @@ def load(i):
     return dill.load(f)
 
 print 'load data ...'
+lcmp = True
+print 'lcmp = ', lcmp
 clus = read_cluster('./data/tm_pt8/list.txt', './data/tm_pt8/structs/final_#.xyz', traj=True)
 dmax, dmin = find_max_min(clus)
 trans_forward(clus, dmax, dmin)
 random.shuffle(clus)
 for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
-x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
-x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
+if lcmp:
+  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 20000, num=5)
+  x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 2000, num=5)
+else:
+  x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
+  x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
+
+print len(x_train), len(y_train), len(x_test), len(y_test)
 
 from neupy import algorithms, layers, __version__
 
@@ -219,57 +285,125 @@ class ACT(layers.ActivationLayer):
     # activation_function = (lambda x:T.nnet.sigmoid(x) * 2 - 1)
     # activation_function = (lambda x:T.tanh(x/2) + T.nnet.sigmoid(x))
     # activation_function = (lambda x:T.nnet.sigmoid(x))
-    # activation_function = T.tanh
-    activation_function = T.nnet.relu
+    activation_function = T.tanh
+    # activation_function = T.nnet.relu
     # activation_function = (lambda x: (x/5)**2)
     # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
-load_i = -1
+load_i = 11
+load_sim = True
 print 'construct network ...'
-network = algorithms.Momentum(
-  [
-    ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
-    ACT(100), # 28 x 50 -> 28 x 1
-    ACT(50), # 28 x 50 -> 28 x 1
-    layers.Softplus(10), 
-    layers.Reshape(presize=4), # 28 x 1 -> 28
-    layers.Average(), # 28 -> 1
-    layers.Output(1), 
-  ],
-  # error='binary_crossentropy',
-  error='mse',
-  step=0.1,
-  verbose=True,
-  batch_size = 100,
-  # mu=0.1,
-  # mu_update_factor = 1,
-  # addons=[algorithms.WeightDecay], 
-  nesterov = True,
-  momentum = 0.8, 
-  shuffle_data=True,
-  # decay_rate = 0.0001, 
-  show_epoch = 2
-) if load_i == -1 else load(load_i)
+if not lcmp:
+  network = algorithms.Momentum(
+    [
+      ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
+      ACT(100), # 28 x 50 -> 28 x 1
+      ACT(50), # 28 x 50 -> 28 x 1
+      layers.Softplus(10), 
+      layers.Reshape(presize=4), # 28 x 1 -> 28
+      layers.Average(), # 28 -> 1
+      layers.Output(1), 
+    ],
+    # error='binary_crossentropy',
+    error='mse',
+    step=0.1,
+    verbose=True,
+    batch_size = 100,
+    # mu=0.1,
+    # mu_update_factor = 1,
+    # addons=[algorithms.WeightDecay], 
+    nesterov = True,
+    momentum = 0.8, 
+    shuffle_data=True,
+    # decay_rate = 0.0001, 
+    show_epoch = 2
+  ) if load_i == -1 else load(load_i)
+else:
+  network = algorithms.Momentum(
+    [
+      ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
+      ACT(100), 
+      layers.SquareNorm(presize=50), 
+      layers.Reshape(), 
+      layers.Tanh(1), 
+      layers.Softmax(2), 
+      layers.ArgmaxOutput(2), 
+    ],
+    # error='binary_crossentropy',
+    error='mse',
+    step=0.005,
+    verbose=True,
+    batch_size = 10,
+    # mu=0.1,
+    # mu_update_factor = 1,
+    # addons=[algorithms.WeightDecay], 
+    nesterov = True,
+    momentum = 0.8, 
+    shuffle_data=True,
+    # decay_rate = 0.0001, 
+    show_epoch = 2
+  ) if load_i == -1 else load(load_i)
+  if load_sim:
+    network2 = algorithms.Momentum(
+      [
+        ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
+        ACT(100), 
+        layers.SquareNorm(presize=50), 
+        layers.Output(1), 
+      ],
+      # error='binary_crossentropy',
+      error='mse',
+      step=0.005,
+      verbose=True,
+      batch_size = 10,
+      # mu=0.1,
+      # mu_update_factor = 1,
+      # addons=[algorithms.WeightDecay], 
+      nesterov = True,
+      momentum = 0.8, 
+      shuffle_data=True,
+      # decay_rate = 0.0001, 
+      show_epoch = 2
+    )
+    network2.layers[0].weight = network.layers[0].weight
+    network2.layers[0].bias = network.layers[0].bias
+    network2.layers[1].weight = network.layers[1].weight
+    network2.layers[1].bias = network.layers[1].bias
+    network = network2
 
 print network
 print 'train ...'
-print x_train[0], y_train[0]
-network.train(x_train, y_train, x_test, y_test, epochs=1000)
+if lcmp:
+  print zip(x_train[0:5], y_train[0:5])
+else:
+  print (x_train[0], y_train[0])
+if not load_sim:
+  network.train(x_train, y_train, x_test, y_test, epochs=300)
 
 y_pre = network.predict(x_test)
 
-y_pre = trans_backward_y(y_pre, dmax, dmin)
-y_test = trans_backward_y(y_test, dmax, dmin)
+if not lcmp:
+  y_pre = trans_backward_y(y_pre, dmax, dmin)
+  y_test = trans_backward_y(y_test, dmax, dmin)
 
 import math
 httoev = 27.21138505
 res = 0.0
 ff = open('data/fitenergy.txt', 'w')
+ntotal = len(y_pre)
+nr = 0
 for x, y in zip(y_test, y_pre):
-  # print x, y
-  ff.write('%15.6f %15.6f\n' % (x, y[0]))
-  res += (x - y)**2
+  # if lcmp: y = [y,1] if y > 0.5 else [y,0]
+  if lcmp: print x, y
+  if lcmp:
+    if x[y] == 1: nr += 1
+  if not lcmp: ff.write('%15.6f %15.6f\n' % (x, y[0]))
+  # if lcmp: ff.write('%15.6f %15.6f\n' % (x[0], y[0]))
+  if not lcmp: res += (x - y[0])**2
 ff.close()
-print math.sqrt(res/len(y_test)) * httoev
+if lcmp:
+  print nr * 100 / ntotal, '%'
+else:
+  print math.sqrt(res/len(y_test)) * httoev
 
 store(network)

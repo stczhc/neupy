@@ -240,13 +240,13 @@ def store(network):
   with open(c, 'wb') as f:
     dill.dump(network, f)
 
-def store_data(dat):
+def store_datag(dat):
   c = new_file_name('data/train_data.dill')
   print 'data dump at ' + c
   with open(c, 'wb') as f:
     dill.dump(dat, f)
 
-def load_data(i):
+def load_datag(i):
   if isinstance(i, str):
     c = i
   else:
@@ -287,14 +287,14 @@ for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
 if lcmp:
   if lload_data:
-    x_train, y_train, x_test, y_test = load_data(-1)
+    x_train, y_train, x_test, y_test = load_datag(-1)
   else:
     x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 100000, num=5)
     x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 10000, num=5)
-  if lstore_data: store_data((x_train, y_train, x_test, y_test))
+  if lstore_data: store_datag((x_train, y_train, x_test, y_test))
 else:
   if lload_data:
-    x_train, y_train, x_test, y_test = load_data(-1)
+    x_train, y_train, x_test, y_test = load_datag(-1)
   else:
     old_network = load('data/nip.dill.2')
     pre_network = network = algorithms.Momentum(
@@ -308,7 +308,7 @@ else:
       pre_network.layers[i].bias.set_value(old_network.layers[i].bias.get_value())
     x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5, network=pre_network)
     x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5, network=pre_network)
-  if lstore_data: store_data((x_train, y_train, x_test, y_test))
+  if lstore_data: store_datag((x_train, y_train, x_test, y_test))
 
 print len(x_train), len(y_train), len(x_test), len(y_test)
 

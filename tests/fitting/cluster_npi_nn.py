@@ -294,7 +294,7 @@ if lcmp:
   if lstore_data: store_datag((x_train, y_train, x_test, y_test))
 else:
   if lload_data:
-    x_train, y_train, x_test, y_test = load_datag(-1)
+    x_train, y_train, x_test, y_test = load_datag(0)
   else:
     old_network = load('data/nip.dill.2')
     pre_network = network = algorithms.Momentum(
@@ -314,7 +314,7 @@ print len(x_train), len(y_train), len(x_test), len(y_test)
 
 environment.reproducible()
 
-load_i = -1
+load_i = 11
 load_sim = False
 print 'construct network ...'
 if not lcmp:

@@ -269,8 +269,8 @@ random.shuffle(clus)
 for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
 if lcmp:
-  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 10000, num=5)
-  x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 1000, num=5)
+  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 5000, num=5)
+  x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 500, num=5)
 else:
   x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
   x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
@@ -328,8 +328,9 @@ else:
     [
       ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
       ACT(100), 
-      layers.SquareNorm(presize=50), 
+      layers.SquareMax(presize=50), 
       layers.Reshape(), 
+      layers.Root(1/10.0), 
       layers.Tanh(1), 
       layers.Softmax(2), 
       layers.ArgmaxOutput(2), 
@@ -356,7 +357,7 @@ if lcmp:
 else:
   print (x_train[0], y_train[0])
 if not load_sim:
-  network.train(x_train, y_train, x_test, y_test, epochs=100)
+  network.train(x_train, y_train, x_test, y_test, epochs=300)
 
 y_pre = network.predict(x_test)
 input_data = network.format_input_data(x_test)

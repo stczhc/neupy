@@ -1,11 +1,11 @@
 import numpy as np
 import theano.tensor as T
 
-from neupy.core.properties import ProperFractionProperty, TypedListProperty, IntProperty
+from neupy.core.properties import ProperFractionProperty, TypedListProperty, IntProperty, NumberProperty
 from .base import BaseLayer
 
 __all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 
-    'Length4D', 'Length', 'Length2', 'Average', 'SquareMax', 'SquareNorm')
+    'Length4D', 'Length', 'Length2', 'Average', 'SquareMax', 'SquareNorm', 'Root')
 
 class Dropout(BaseLayer):
     """ Dropout layer
@@ -167,6 +167,15 @@ class Length(Reshape):
 class Length2(Length):
     def output(self, input_value):
         return super(Length2, self).output(input_value)**2
+
+class Root(Reshape):
+    power = NumberProperty()
+    def __init__(self, power=None, **options):
+        if power is not None:
+            options['power'] = power
+        super(Root, self).__init__(**options)
+    def output(self, input_value):
+        return super(Root, self).output(input_value)**self.power
 
 class Average(Reshape):
     def output(self, input_value):

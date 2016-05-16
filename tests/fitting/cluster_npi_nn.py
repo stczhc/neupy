@@ -240,6 +240,21 @@ def store(network):
   with open(c, 'wb') as f:
     dill.dump(network, f)
 
+def store_data(dat):
+  c = new_file_name('data/train_data.dill')
+  print 'data dump at ' + c
+  with open(c, 'wb') as f:
+    dill.dump(dat, f)
+
+def load_data(i):
+  if isinstance(i, str):
+    c = i
+  else:
+    c = 'data/train_data.dill.' + str(i)
+  print 'data load at ' + c
+  with open(c, 'rb') as f:
+    return dill.load(f)
+
 def load(i):
   if isinstance(i, str):
     c = i
@@ -261,6 +276,8 @@ class ACT(layers.ActivationLayer):
 
 print 'load data ...'
 lcmp = False
+lstore_data = True
+lload_data = False
 print 'lcmp = ', lcmp
 clus = read_cluster('./data/tm_pt8/list.txt', './data/tm_pt8/structs/final_#.xyz', traj=True)
 dmax, dmin = find_max_min(clus)
@@ -269,21 +286,29 @@ random.shuffle(clus)
 for c in clus: c.gen_ll()
 ratio = 9.0 / 10.0
 if lcmp:
-  x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 100000, num=5)
-  x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 10000, num=5)
+  if lload_data:
+    x_train, y_train, x_test, y_test = load_data(-1)
+  else:
+    x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 100000, num=5)
+    x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 10000, num=5)
+  if lstore_data: store_data((x_train, y_train, x_test, y_test))
 else:
-  old_network = load('nip.dill.2')
-  pre_network = network = algorithms.Momentum(
-    [
-      ACT(old_network.layers[0].size, ndim=2), # 28 x 1 -> 28 x 50
-      ACT(100), 
-      layers.Output(20)
-    ])
-  for i in range(0, 1):
-    pre_network.layers[i].weight.set_value(old_network.layers[i].weight.get_value())
-    pre_network.layers[i].bias.set_value(old_network.layers[i].bias.get_value())
-  x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5, network=pre_network)
-  x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5, network=pre_network)
+  if lload_data:
+    x_train, y_train, x_test, y_test = load_data(-1)
+  else:
+    old_network = load('nip.dill.2')
+    pre_network = network = algorithms.Momentum(
+      [
+        ACT(old_network.layers[0].size, ndim=2), # 28 x 1 -> 28 x 50
+        ACT(100), 
+        layers.Output(20)
+      ])
+    for i in range(0, 1):
+      pre_network.layers[i].weight.set_value(old_network.layers[i].weight.get_value())
+      pre_network.layers[i].bias.set_value(old_network.layers[i].bias.get_value())
+    x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5, network=pre_network)
+    x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5, network=pre_network)
+  if lstore_data: store_data((x_train, y_train, x_test, y_test))
 
 print len(x_train), len(y_train), len(x_test), len(y_test)
 

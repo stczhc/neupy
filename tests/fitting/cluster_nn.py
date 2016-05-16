@@ -293,9 +293,12 @@ if lcmp:
     x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 10000, num=5)
   if lstore_data: store_data((x_train, y_train, x_test, y_test))
 else:
-  x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
-  x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
-
+  if lload_data:
+    x_train, y_train, x_test, y_test = load_data(-1)
+  else:
+    x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
+    x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
+  if lstore_data: store_data((x_train, y_train, x_test, y_test))
 print len(x_train), len(y_train), len(x_test), len(y_test)
 
 from neupy import algorithms, layers, __version__

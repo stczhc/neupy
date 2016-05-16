@@ -296,7 +296,7 @@ else:
   if lload_data:
     x_train, y_train, x_test, y_test = load_data(-1)
   else:
-    old_network = load('nip.dill.2')
+    old_network = load('data/nip.dill.2')
     pre_network = network = algorithms.Momentum(
       [
         ACT(old_network.layers[0].size, ndim=2), # 28 x 1 -> 28 x 50

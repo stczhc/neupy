@@ -328,9 +328,9 @@ else:
     [
       ACT(x_train.shape[-1], ndim=3), # 28 x 1 -> 28 x 50
       ACT(100), 
-      layers.SquareMax(presize=50), 
+      layers.SquareMax(presize=20), 
       layers.Reshape(), 
-      layers.Root(1/10.0), 
+      layers.Root(1/15.0), 
       layers.Tanh(1), 
       layers.Softmax(2), 
       layers.ArgmaxOutput(2), 

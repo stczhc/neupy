@@ -272,12 +272,12 @@ if lcmp:
   x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 100000, num=5)
   x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 10000, num=5)
 else:
-  old_network = load('nip.dill.1')
+  old_network = load('nip.dill.2')
   pre_network = network = algorithms.Momentum(
     [
       ACT(old_network.layers[0].size, ndim=2), # 28 x 1 -> 28 x 50
       ACT(100), 
-      layers.Output(50)
+      layers.Output(20)
     ])
   for i in range(0, 1):
     pre_network.layers[i].weight.set_value(old_network.layers[i].weight.get_value())

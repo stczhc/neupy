@@ -7,6 +7,8 @@ import sys
 import os
 sys.path.insert(0, sys.path[0] + '/../..')
 import neupy
+from neupy import algorithms, layers
+from neupy import environment
 print neupy.__version__
 
 import theano
@@ -16,6 +18,7 @@ import theano.tensor as T
 import itertools
 
 tdr = os.environ['TMPDIR']
+print os.getcwd()
 # os.environ['THEANO_FLAGS'] = 'base_compiledir=' + tdr
 
 class Cluster(object):
@@ -64,6 +67,7 @@ class Cluster(object):
   def get_flat(self):
     return self.atoms.reshape(self.n * 3)
   
+  # only lengths
   def get_lengths_x(self, num=None):
     if num is None: num = self.n
     xx = self.mat_x[num - 1]
@@ -76,21 +80,14 @@ class Cluster(object):
           r[k].append(exp(-ll[xx[k, i], xx[k, j]]/5.0))
     return np.asarray(r)
   
+  # lengths and product of lengths
   def get_lengths_sp(self, num=None):
-    if num is None: num = self.n
-    ll = self.mat_ll
-    xx = self.mat_x[num - 1]
-    r = []
-    for l in range(0, xx.shape[0]):
-      r.append([])
-      for i in range(0, xx.shape[1]):
+    r = self.get_lengths_x(num).tolist()
+    for k in range(0, len(r)):
+      ni = len(r[k])
+      for i in range(0, ni):
         for j in range(0, i):
-          lij = ll[xx[l, i], xx[l, j]]
-          for k in range(0, j):
-            lik = ll[xx[l, i], xx[l, k]]
-            ljk = ll[xx[l, j], xx[l, k]]
-            r[l] += [lij + lik, lij + ljk, lik + ljk, 
-              lij * lik, lij * ljk, lik * ljk]
+          r[k].append(r[k][i] * r[k][j])
     return np.asarray(r)
   
   def get_lengths(self):
@@ -153,7 +150,7 @@ def read_cluster(ener, xyz, traj=False):
   print 'struct loaded: ', len(clul)
   return clul
 
-def load_data(clus, n, num=None):
+def load_data(clus, n, num=None, network=None):
   x_d = []
   y_d = []
   for i in xrange(0, n):
@@ -162,7 +159,10 @@ def load_data(clus, n, num=None):
     clu = clus[idx]
     clu.shuffle()
     clu.gen_ll()
-    x_d.append(clu.get_lengths_x(num))
+    if network is None:
+      x_d.append(clu.get_lengths_sp(num))
+    else:
+      x_d.append(network.predict(clu.get_lengths_sp(num)))
     y_d.append(clu.energy)
   y_d = np.array(y_d)
   x_d = np.asarray(x_d)
@@ -176,20 +176,6 @@ def load_data_cmp(clus, n, num=None):
     mm = 0.01
     idxg = np.random.randint(2)
     if idxg == 0:
-      # while mm < 0.4:
-      #   idx = np.random.randint(len(clus))
-      #   clu = clus[idx]
-      #   idx = np.random.randint(len(clus))
-      #   clu2 = clus[idx]
-      #   mm = abs(clu2.energy - clu.energy)
-      # clu.shuffle(num)
-      # clu2.shuffle(num)
-      # clu.gen_ll()
-      # clu2.gen_ll()
-      # a = clu.get_lengths_x(num)[0]
-      # b = clu2.get_lengths_x(num)[0]
-      # x_d.append([a, b])
-      # y_d.append(1)
       idx = np.random.randint(len(clus))
       clu = clus[idx]
       clu.shuffle(num)
@@ -255,12 +241,26 @@ def store(network):
     dill.dump(network, f)
 
 def load(i):
-  print 'load at ' + 'data/network-storage.dill.' + str(i)
-  with open('data/network-storage.dill.' + str(i), 'rb') as f:
+  if isinstance(i, str):
+    c = i
+  else:
+    c = 'data/network-storage.dill.' + str(i)
+  print 'load at ' + c
+  with open(c, 'rb') as f:
     return dill.load(f)
 
+class ACT(layers.ActivationLayer):
+    # activation_function = (lambda x:T.nnet.relu(x) * 2 - 1)
+    # activation_function = (lambda x:T.nnet.sigmoid(x) * 2 - 1)
+    # activation_function = (lambda x:T.tanh(x/2) + T.nnet.sigmoid(x))
+    # activation_function = (lambda x:T.nnet.sigmoid(x))
+    activation_function = T.tanh
+    # activation_function = T.nnet.relu
+    # activation_function = (lambda x: (x/5)**2)
+    # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
+
 print 'load data ...'
-lcmp = True
+lcmp = False
 print 'lcmp = ', lcmp
 clus = read_cluster('./data/tm_pt8/list.txt', './data/tm_pt8/structs/final_#.xyz', traj=True)
 dmax, dmin = find_max_min(clus)
@@ -272,28 +272,22 @@ if lcmp:
   x_train, y_train = load_data_cmp(clus[1:int(len(clus)*ratio)], 100000, num=5)
   x_test, y_test = load_data_cmp(clus[int(len(clus)*ratio):], 10000, num=5)
 else:
-  x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5)
-  x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5)
+  old_network = load('nip.dill.1')
+  pre_network = network = algorithms.Momentum(
+    [
+      ACT(old_network.layers[0].size, ndim=2), # 28 x 1 -> 28 x 50
+      ACT(100), 
+      layers.Output(50)
+    ])
+  for i in range(0, 1):
+    pre_network.layers[i].weight.set_value(old_network.layers[i].weight.get_value())
+    pre_network.layers[i].bias.set_value(old_network.layers[i].bias.get_value())
+  x_train, y_train = load_data(clus[1:int(len(clus)*ratio)], 100000, num=5, network=pre_network)
+  x_test, y_test = load_data(clus[int(len(clus)*ratio):], 10000, num=5, network=pre_network)
 
 print len(x_train), len(y_train), len(x_test), len(y_test)
 
-from neupy import algorithms, layers, __version__
-
-from neupy import environment
 environment.reproducible()
-
-print __version__
-print os.getcwd()
-
-class ACT(layers.ActivationLayer):
-    # activation_function = (lambda x:T.nnet.relu(x) * 2 - 1)
-    # activation_function = (lambda x:T.nnet.sigmoid(x) * 2 - 1)
-    # activation_function = (lambda x:T.tanh(x/2) + T.nnet.sigmoid(x))
-    # activation_function = (lambda x:T.nnet.sigmoid(x))
-    activation_function = T.tanh
-    # activation_function = T.nnet.relu
-    # activation_function = (lambda x: (x/5)**2)
-    # activation_function = (lambda x: T.nnet.relu(x) + 2*T.nnet.sigmoid(x*5))
 
 load_i = -1
 load_sim = False
@@ -360,10 +354,13 @@ if not load_sim:
   network.train(x_train, y_train, x_test, y_test, epochs=500)
 
 y_pre = network.predict(x_test)
-input_data = network.format_input_data(x_test)
-f = theano.function(inputs=[network.variables.network_input],
-  outputs=network.layers[2].prediction)
-y_pre2 = f(input_data)
+if lcmp:
+  input_data = network.format_input_data(x_test)
+  f = theano.function(inputs=[network.variables.network_input],
+    outputs=network.layers[2].prediction)
+  y_pre2 = f(input_data)
+else:
+  y_pre2 = y_pre
 
 if not lcmp:
   y_pre = trans_backward_y(y_pre, dmax, dmin)
@@ -377,7 +374,7 @@ ntotal = len(y_pre)
 nr = 0
 for x, y, y2 in zip(y_test, y_pre, y_pre2):
   # if lcmp: y = [y,1] if y > 0.5 else [y,0]
-  if lcmp: print x, y, y2
+  print x, y, y2
   if lcmp:
     if not load_sim:
       if x[y] == 1: nr += 1

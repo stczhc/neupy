@@ -522,10 +522,10 @@ if __name__ == "__main__":
               ft.write('%8d %15.8f %15.8f %15.8f\n' % (idx, std, pre, abs(std - pre)))
           if ipft["test_output"]:
             ft.close()
-          print ('%15.8f\n' % sqrt(nr / ntest) * httoev, ' eV')
+          print ('%15.8f\n' % (sqrt(nr / ntest) * httoev), ' eV')
           if ipft["error_output"]:
             ft = open(new_file_name(fit_error_name), 'w')
-            ft.write('# %15.8f eV\n' % sqrt(nr / ntest) * httoev)
+            ft.write('# %15.8f eV\n' % (sqrt(nr / ntest) * httoev))
             for i, j in zip(fit_net.errors, fit_net.validation_errors):
               ft.write('%15.8f %15.8f\n' % (i, j))
             ft.close()

@@ -3,8 +3,8 @@
         "fit" // "npic"
     ],
     "data_files": {
-        "load_data": -1,
-        "dump_data": true,
+        "load_data": 0,
+        "dump_data": false,
         "list_file": "../../data/tm_pt8/list.txt",
         "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
         "output_dir": "../../data/nd4_no_npi", 
@@ -71,7 +71,7 @@
         "momentum": 0.8,
         "show_epoch": 2,
         "use_npic": true,
-        "train_network": true,
+        "train_network": false,
         "test_network": true,
         "epochs": 500,
         "test_output": true, 

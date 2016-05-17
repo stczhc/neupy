@@ -276,8 +276,8 @@ class ACT(layers.ActivationLayer):
 
 print 'load data ...'
 lcmp = False
-lstore_data = True
-lload_data = False
+lstore_data = False
+lload_data = True
 print 'lcmp = ', lcmp
 clus = read_cluster('./data/tm_pt8/list.txt', './data/tm_pt8/structs/final_#.xyz', traj=True)
 dmax, dmin = find_max_min(clus)

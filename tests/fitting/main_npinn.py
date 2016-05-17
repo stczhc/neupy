@@ -1,7 +1,8 @@
 
 import numpy as np
 from math import *
-import random, sys, os, itertools, json, dill
+import random, sys, os, itertools
+import re, json, dill
 
 sys.path.insert(0, sys.path[0] + '/../..')
 import neupy
@@ -47,13 +48,18 @@ class Cluster(object):
     ll = []
     for g in lx:
       lc = []
-      for i in range(0, num):
-        for j in range(0, i):
-          lc.append(exp(-np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]) / self.exp_length))
+      if self.exp_length != 0:
+        for i in range(0, num):
+          for j in range(0, i):
+            lc.append(exp(-np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]) / self.exp_length))
+      else:
+        for i in range(0, num):
+          for j in range(0, i):
+            lc.append(np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]))
       nr = len(lc)
       for i in range(0, nr):
-        for j in range(0, i):
-          lc.append(lc[i]*lc[j])
+        for j in range(0, i + 1): # added self-square here
+          lc.append(lc[i] * lc[j])
       ll.append(lc)
     return ll
   
@@ -71,9 +77,14 @@ class Cluster(object):
     r = []
     for k in range(0, xx.shape[0]):
       r.append([])
-      for i in range(0, xx.shape[1]):
-        for j in range(0, i):
-          r[k].append(exp(-ll[xx[k, i], xx[k, j]] / self.exp_length))
+      if self.exp_length != 0:
+        for i in range(0, xx.shape[1]):
+          for j in range(0, i):
+            r[k].append(exp(-ll[xx[k, i], xx[k, j]] / self.exp_length))
+      else:
+        for i in range(0, xx.shape[1]):
+          for j in range(0, i):
+            r[k].append(ll[xx[k, i], xx[k, j]])
     return np.asarray(r)
   
   # lengths and product of lengths
@@ -103,6 +114,7 @@ class Cluster(object):
 # read input
 def read_input(fn):
   json_data = open(fn).read()
+  json_data = re.sub(r'//.*\n', '\n', json_data)
   return json.loads(json_data)
 
 # avoid overwritting
@@ -175,7 +187,7 @@ def trans_data(clus, n, num, typed, npi_network=None):
   y_d = []
   for i in xrange(0, n):
     if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
-    idx = random.randint(len(clus))
+    idx = random.randrange(len(clus))
     if typed == "fit":
       clu = clus[idx]
       clu.shuffle()
@@ -186,12 +198,12 @@ def trans_data(clus, n, num, typed, npi_network=None):
         x_d.append(npi_network.predict(clu.get_lengths_sp(num)))
       y_d.append(clu.energy)
     elif typed == "npic":
-      idxg = random.randint(2)
+      idxg = random.randrange(2)
       clu = clus[idx]
       clu.shuffle(num)
       pll = clu.gen_per_ll(num)
       if idxg == 0:
-        idx = random.randint(len(pll))
+        idx = random.randrange(len(pll))
         plx = [x for x in pll[idx]]
         random.shuffle(plx)
         while plx in pll:
@@ -199,7 +211,7 @@ def trans_data(clus, n, num, typed, npi_network=None):
         x_d.append([pll[0], plx])
         y_d.append([0, 1]) # different
       else:
-        idx = random.randint(len(pll) - 1) + 1
+        idx = random.randrange(len(pll) - 1) + 1
         x_d.append([pll[0], pll[idx]])
         y_d.append([1, 0]) # the same
   x_d = np.asarray(x_d)
@@ -218,6 +230,22 @@ def find_max_min(clus, min_max_ext_ratio):
   dmax += dmm * ratio
   return dmax, dmin
 
+# find length max, min
+# used when exp does not apply
+def find_l_max_min(dat, min_max_ext_ratio):
+  ratio = min_max_ext_ratio
+  dmax = np.ma.max(dat[0])
+  dmin = np.ma.min(dat[0])
+  for d in dat[1:]:
+    dmaxr = np.ma.max(d)
+    dminr = np.ma.min(d)
+    if dmaxr > dmax: dmax = dmaxr
+    if dminr < dmin: dmin = dminr
+  dmm = dmax - dmin
+  dmin -= dmm * ratio
+  dmax += dmm * ratio
+  return dmax, dmin
+
 def trans_forward(ener, dmax, dmin):
   return (ener - dmin) / (dmax - dmin)
 
@@ -229,6 +257,7 @@ def trans_backward(ener, dmax, dmin):
 layer_dic = {
   "tanh": layers.Tanh, 
   "sigmoid": layers.Sigmoid, 
+  "tanhsig": layers.TanhSig, 
   "soft_plus": layers.Softplus, 
   "soft_max": layers.Softmax, 
   "relu": layers.Relu, 
@@ -269,7 +298,8 @@ def create_network(ipdata, size, typed):
       layers.Average(),
       layers.Output(1),
     ]
-  opts = { "error": "mse", "step": ipdata["step"], "verbose": True, 
+  opts = { "error": "mse", "step": ipdata["step"], 
+    "verbose": False if typed == "npi" else True, 
     "batch_size": ipdata["batch_size"], "nesterov": True, 
     "momentum": ipdata["momentum"], "shuffle_data": True, 
     "show_epoch": ipdata["show_epoch"] }
@@ -299,14 +329,6 @@ def transfer_parameters(neta, netb):
       netb.layers[i].weight.set_value(neta.layers[i].weight.get_value())
       netb.layers[i].bias.set_value(neta.layers[i].bias.get_value())
 
-npic_network_name = "npic_network.dill"
-npic_data_name = "npic_data.dill"
-npic_test_name = "npic_test.txt"
-fit_network_name = "fit_network.dill"
-fit_data_name = "fit_data.dill"
-fit_test_name = "fit_test.txt"
-fit_network_name = "fit_network.dill"
-
 # main program
 if __name__ == "__main__":
   if len(sys.argv) < 1 + 1:
@@ -317,13 +339,21 @@ if __name__ == "__main__":
     ippn = ip["npi_network"]
     ipft = ip["fit_network"]
     
+    npic_network_name = ipdt["output_dir"] + "/npic_network.dill"
+    npic_data_name = ipdt["output_dir"] + "/npic_data.dill"
+    npic_test_name = ipdt["output_dir"] + "/npic_test.txt"
+    fit_network_name = ipdt["output_dir"] + "/fit_network.dill"
+    fit_data_name = ipdt["output_dir"] + "/fit_data.dill"
+    fit_test_name = ipdt["output_dir"] + "/fit_test.txt"
+    fit_network_name = ipdt["output_dir"] + "/fit_network.dill"
+    
     print ('load primary data ...')
     rcopts = {
       "ener": ipdt["list_file"], "xyz": ipdt["struct_file"], 
       "ecut": ipdt["energy_cut"], "expl": ipdt["exp_length"], 
       "traj": ipdt["trajectory_form"]
     }
-    clus = read_cluster(ener, xyz, ecut, expl, traj)
+    clus = read_cluster(**rcopts)
     dmax, dmin = find_max_min(clus, ipdt["min_max_ext_ratio"])
     random.shuffle(clus)
     nd = ipdt["degree_of_fitting"]
@@ -358,6 +388,9 @@ if __name__ == "__main__":
             rstart = rend
             x, y = trans_data(clus, ipdt["sample_number"][i], nd, typed="npic")
             npic_data += [x, y]
+          if ipdt["scale_lengths"]:
+            xmax, xmin = find_l_max_min(npic_data[0:6:2], ipdt["min_max_ext_ratio"])
+            for i in range(0, 6, 2): npic_data[i] = trans_forward(npic_data[i], xmax, xmin)
         if ipdt["dump_data"]:
           print ('dump data ...')
           dump_data(name=npic_data_name, obj=npic_data)
@@ -388,11 +421,11 @@ if __name__ == "__main__":
           nr = 0
           if ippn["test_output"]:
             ft = open(new_file_name(npic_test_name), 'w')
-            ft.write('%8s %10s %10s %15s' % ('id', 'standard', 'predict', 'calibrate'))
+            ft.write('%8s %10s %10s %15s\n' % ('id', 'standard', 'predict', 'calibrate'))
           for idx, std, pre, ind in zip(range(ntest), npic_std, npic_final, npic_ind):
             if std == pre: nr += 1
             if ippn["test_output"]:
-              ft.write('%8d %10d %10d %15.8f' % (idx, std, pre, ind))
+              ft.write('%8d %10d %10d %15.8f\n' % (idx, std, pre, ind))
           if ippn["test_output"]: ft.close()
           print (nr * 100 / ntest, '%')
         
@@ -409,7 +442,10 @@ if __name__ == "__main__":
           else:
             fit_net = load_data(name=ipft["load_network"])
         else:
-          fit_net = create_fit_network(ipft, ippn["sizes"][-1])
+          if ipft["load_npic_network"] != -1:
+            fit_net = create_fit_network(ipft, ippn["sizes"][-1])
+          else:
+            fit_net = create_fit_network(ipft, nd * (nd - 1) / 2)
         
         print ('transfrom data ...')
         if ipdt["load_data"] != -1:
@@ -418,8 +454,8 @@ if __name__ == "__main__":
           else:
             fit_data = load_data(name=ipdt["load_data"])
         else:
-          print ('create npi network ...')
           if ipft["load_npic_network"] != -1:
+            print ('create npi network ...')
             if isinstance(ipft["load_npic_network"], int):
               npic_net = load_data(name=npic_network_name, i=ipft["load_npic_network"])
             else:
@@ -442,6 +478,9 @@ if __name__ == "__main__":
               typed="fit", npi_network=npi_net)
             y = trans_forward(y, dmax, dmin)
             fit_data += [x, y]
+          if ipdt["scale_lengths"]:
+            xmax, xmin = find_l_max_min(fit_data[0:6:2], ipdt["min_max_ext_ratio"])
+            for i in range(0, 6, 2): fit_data[i] = trans_forward(fit_data[i], xmax, xmin)
         if ipdt["dump_data"]:
           print ('dump data ...')
           dump_data(name=fit_data_name, obj=fit_data)
@@ -458,7 +497,7 @@ if __name__ == "__main__":
         if ipft["test_network"]:
           print ('test network ...')
           fit_pre = fit_net.predict(fit_data[4])
-          fit_pre = [f[0] for f in fit_pre]
+          fit_pre = np.asarray([f[0] for f in fit_pre])
           fit_std = fit_data[5]
           fit_std = trans_backward(fit_std, dmax, dmin)
           fit_pre = trans_backward(fit_pre, dmax, dmin)
@@ -466,13 +505,13 @@ if __name__ == "__main__":
           nr = 0.0
           if ipft["test_output"]:
             ft = open(new_file_name(fit_test_name), 'w')
-            ft.write('%8s %15s %15s %15s' % ('id', 'standard', 'predict', 'error'))
+            ft.write('%8s %15s %15s %15s\n' % ('id', 'standard', 'predict', 'error'))
           for idx, std, pre in zip(range(ntest), fit_std, fit_pre):
             nr += (std - pre) ** 2
             if ipft["test_output"]:
-              ft.write('%8d %15.8f %15.8f %15.8f' % (idx, std, pre, abs(std - pre)))
+              ft.write('%8d %15.8f %15.8f %15.8f\n' % (idx, std, pre, abs(std - pre)))
           if ipft["test_output"]: ft.close()
-          print ('%15.8f' % sqrt(nr / ntest) * httoev, ' eV')
+          print ('%15.8f\n' % sqrt(nr / ntest) * httoev, ' eV')
         
         if ipft["dump_network"]:
           print ('dump network ...')

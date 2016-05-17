@@ -6,7 +6,7 @@ from .base import ParameterBasedLayer
 
 
 __all__ = ('ActivationLayer', 'Linear', 'Sigmoid', 'HardSigmoid', 'Step',
-           'Tanh', 'Relu', 'Softplus', 'Softmax', 'Square')
+           'Tanh', 'Relu', 'Softplus', 'Softmax', 'Square', 'TanhSig')
 
 
 class LayerMeta(ConfigMeta):
@@ -187,6 +187,19 @@ class Softplus(ActivationLayer):
     {ParameterBasedLayer.bounds}
     """
     activation_function = T.nnet.softplus
+
+class TanhSig(ActivationLayer):
+    """ The layer with the softplus activation function.
+
+    Parameters
+    ----------
+    {ActivationLayer.size}
+    {ParameterBasedLayer.weight}
+    {ParameterBasedLayer.bias}
+    {ParameterBasedLayer.init_method}
+    {ParameterBasedLayer.bounds}
+    """
+    activation_function = (lambda x: T.tanh(x) + T.nnet.sigmoid(x))
 
 
 class Softmax(ActivationLayer):

@@ -1,18 +1,30 @@
 {
-    "task": [ "npic" ], 
+    "task": [
+        "fit" // "npic"
+    ],
     "data_files": {
         "load_data": -1,
         "dump_data": true,
         "list_file": "./data/tm_pt8/list.txt",
         "struct_file": "./data/tm_pt8/structs/final_#.xyz",
-        "trajectory_form": true, 
-        "energy_cut": -954.6, 
-        "number_of_atoms": 8, 
-        "degree_of_fitting": 5, 
-        "sample_number": [ 100000, 10000, 10000 ], // train, validate, test
-        "sample_ratio": [ 9.0, 0.5, 0.5 ], 
-        "exp_length": 5.0, 
-        "min_max_ext_ratio": 0.05 // 0.05 for each
+        "output_dir": "./data/main", 
+        "trajectory_form": true,
+        "energy_cut": -954.6,
+        "number_of_atoms": 8,
+        "degree_of_fitting": 3,
+        "sample_number": [
+            100000,
+            10000,
+            10000
+        ], // train, validate, test
+        "sample_ratio": [
+            9.0,
+            0.5,
+            0.5
+        ],
+        "exp_length": 0,
+        "min_max_ext_ratio": 0.05, // 0.05 for each
+        "scale_lengths": true
     },
     "npi_network": {
         "load_network": -1,
@@ -21,17 +33,20 @@
             30, // the first layer output size
             20 // the second layer output size
         ],
-        "layer_types": [ "tanh", "tanh" ], // the 1st, 2nd layer type. 3rd will be output
+        "layer_types": [
+            "tanh",
+            "tanh"
+        ], // the 1st, 2nd layer type. 3rd will be output
         // tanh, sigmoid, soft_plus, soft_max, relu
         "step": 0.005,
         "batch_size": 10,
         "momentum": 0.8,
-        "show_epoch": 2, 
-        "exponential": 10.0, 
+        "show_epoch": 2,
+        "exponential": 10.0,
         "calibrate_method": "square_max", // abs_max, square_max, diff_norm
-        "train_network": true, 
-        "test_network": true, 
-        "epochs": 500, 
+        "train_network": true,
+        "test_network": true,
+        "epochs": 500,
         "test_output": true
     },
     "fit_network": {
@@ -40,18 +55,24 @@
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             50,
-            6,
-            4
+            10, 
+            4, 
+            1
         ],
-        "layer_types": [ "tanh", "tanh", "soft_plus" ], 
+        "layer_types": [
+            "relu",
+            "relu", 
+            "relu", 
+            "soft_plus"
+        ],
         "step": 0.1,
-        "batch_size": 20,
+        "batch_size": 50,
         "momentum": 0.8,
-        "show_epoch": 2, 
-        "use_npic": true, 
-        "train_network": true, 
-        "test_network": true, 
-        "epochs": 500, 
+        "show_epoch": 2,
+        "use_npic": true,
+        "train_network": true,
+        "test_network": true,
+        "epochs": 500,
         "test_output": true
     }
 }

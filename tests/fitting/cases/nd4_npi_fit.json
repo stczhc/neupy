@@ -1,13 +1,13 @@
 {
     "task": [
-        "fit" // "npic"
+        "fit"
     ],
     "data_files": {
-        "load_data": 0,
-        "dump_data": false,
+        "load_data": -1,
+        "dump_data": true,
         "list_file": "../../data/tm_pt8/list.txt",
         "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
-        "output_dir": "../../data/nd4_no_npi", 
+        "output_dir": "../../data/nd4_npi", 
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
@@ -22,16 +22,16 @@
             0.5,
             0.5
         ],
-        "exp_length": 0,
+        "exp_length": 5.0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true
+        "scale_lengths": false
     },
     "npi_network": {
         "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            30, // the first layer output size
-            20 // the second layer output size
+            50, // the first layer output size
+            30 // the second layer output size
         ],
         "layer_types": [
             "tanh",
@@ -51,7 +51,7 @@
         "error_output": true
     },
     "fit_network": {
-        "load_npic_network": -1,
+        "load_npic_network": 0,
         "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto

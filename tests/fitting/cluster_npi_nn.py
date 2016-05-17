@@ -314,7 +314,7 @@ print len(x_train), len(y_train), len(x_test), len(y_test)
 
 environment.reproducible()
 
-load_i = 11
+load_i = 14
 load_sim = False
 print 'construct network ...'
 if not lcmp:

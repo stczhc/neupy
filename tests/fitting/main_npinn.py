@@ -347,6 +347,9 @@ if __name__ == "__main__":
     fit_test_name = ipdt["output_dir"] + "/fit_test.txt"
     fit_network_name = ipdt["output_dir"] + "/fit_network.dill"
     
+    if not os.path.exists(ipdt["output_dir"]):
+      os.mkdir(ipdt["output_dir"])
+    
     print ('load primary data ...')
     rcopts = {
       "ener": ipdt["list_file"], "xyz": ipdt["struct_file"], 

@@ -47,7 +47,8 @@
         "train_network": true,
         "test_network": true,
         "epochs": 500,
-        "test_output": true
+        "test_output": true, 
+        "error_output": true
     },
     "fit_network": {
         "load_npic_network": -1,
@@ -73,6 +74,7 @@
         "train_network": true,
         "test_network": true,
         "epochs": 500,
-        "test_output": true
+        "test_output": true, 
+        "error_output": true
     }
 }

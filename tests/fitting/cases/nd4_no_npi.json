@@ -5,13 +5,13 @@
     "data_files": {
         "load_data": -1,
         "dump_data": true,
-        "list_file": "./data/tm_pt8/list.txt",
-        "struct_file": "./data/tm_pt8/structs/final_#.xyz",
-        "output_dir": "./data/main", 
+        "list_file": "../../data/tm_pt8/list.txt",
+        "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
+        "output_dir": "../../data/nd4_no_npi", 
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
-        "degree_of_fitting": 3,
+        "degree_of_fitting": 4,
         "sample_number": [
             100000,
             10000,
@@ -22,7 +22,7 @@
             0.5,
             0.5
         ],
-        "exp_length": 0, // 5.0
+        "exp_length": 0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
         "scale_lengths": true
     },

@@ -342,10 +342,11 @@ if __name__ == "__main__":
     npic_network_name = ipdt["output_dir"] + "/npic_network.dill"
     npic_data_name = ipdt["output_dir"] + "/npic_data.dill"
     npic_test_name = ipdt["output_dir"] + "/npic_test.txt"
+    npic_error_name = ipdt["output_dir"] + "/npic_error.txt"
     fit_network_name = ipdt["output_dir"] + "/fit_network.dill"
     fit_data_name = ipdt["output_dir"] + "/fit_data.dill"
     fit_test_name = ipdt["output_dir"] + "/fit_test.txt"
-    fit_network_name = ipdt["output_dir"] + "/fit_network.dill"
+    fit_error_name = ipdt["output_dir"] + "/fit_error.txt"
     
     if not os.path.exists(ipdt["output_dir"]):
       os.mkdir(ipdt["output_dir"])
@@ -431,6 +432,12 @@ if __name__ == "__main__":
               ft.write('%8d %10d %10d %15.8f\n' % (idx, std, pre, ind))
           if ippn["test_output"]: ft.close()
           print (nr * 100 / ntest, '%')
+          if ippn["error_output"]:
+            ft = open(new_file_name(npic_error_name), 'w')
+            ft.write("# %d " % (nr * 100 / ntest, ) + '%\n')
+            for i, j in zip(npic_net.errors, npic_net.validation_errors):
+              ft.write('%15.8f %15.8f\n' % (i, j))
+            ft.close()
         
         if ippn["dump_network"]:
           print ('dump network ...')
@@ -513,8 +520,15 @@ if __name__ == "__main__":
             nr += (std - pre) ** 2
             if ipft["test_output"]:
               ft.write('%8d %15.8f %15.8f %15.8f\n' % (idx, std, pre, abs(std - pre)))
-          if ipft["test_output"]: ft.close()
+          if ipft["test_output"]:
+            ft.close()
           print ('%15.8f\n' % sqrt(nr / ntest) * httoev, ' eV')
+          if ipft["error_output"]:
+            ft = open(new_file_name(fit_error_name), 'w')
+            ft.write('# %15.8f eV\n' % sqrt(nr / ntest) * httoev)
+            for i, j in zip(fit_net.errors, fit_net.validation_errors):
+              ft.write('%15.8f %15.8f\n' % (i, j))
+            ft.close()
         
         if ipft["dump_network"]:
           print ('dump network ...')

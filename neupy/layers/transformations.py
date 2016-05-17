@@ -5,7 +5,8 @@ from neupy.core.properties import ProperFractionProperty, TypedListProperty, Int
 from .base import BaseLayer
 
 __all__ = ('Dropout', 'Reshape', 'Combination', 'Length2D', 'Length3D', 
-    'Length4D', 'Length', 'Length2', 'Average', 'SquareMax', 'SquareNorm', 'Root')
+    'Length4D', 'Length', 'Length2', 'Average', 'SquareMax', 'DiffNorm', 'Root', 
+    'AbsMax')
 
 class Dropout(BaseLayer):
     """ Dropout layer
@@ -120,7 +121,7 @@ class Length4D(Reshape):
         elif input_value.ndim == 4:
             return T.tensordot(input_value, le, axes = [2, 0]).norm(2, axis = 2)
 
-class SquareMax(Reshape):
+class AbsMax(Reshape):
     def output(self, input_value):
         le = T.as_tensor_variable(np.asarray([1, -1]))
         if input_value.ndim == 3:
@@ -128,7 +129,15 @@ class SquareMax(Reshape):
         elif input_value.ndim == 4:
             return T.abs_(T.tensordot(input_value, le, axes = [2, 0])).max(axis = 2)
 
-class SquareNorm(Reshape):
+class SquareMax(Reshape):
+    def output(self, input_value):
+        le = T.as_tensor_variable(np.asarray([1, -1]))
+        if input_value.ndim == 3:
+            return (T.tensordot(input_value, le, axes = [1, 0]) ** 2).max(axis = 1)
+        elif input_value.ndim == 4:
+            return (T.tensordot(input_value, le, axes = [2, 0]) ** 2).max(axis = 2)
+
+class DiffNorm(Reshape):
     def output(self, input_value):
         le = T.as_tensor_variable(np.asarray([1, -1]))
         if input_value.ndim == 3:

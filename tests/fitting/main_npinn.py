@@ -117,6 +117,13 @@ def read_input(fn):
   json_data = re.sub(r'//.*\n', '\n', json_data)
   return json.loads(json_data)
 
+# write json summary
+def write_summary(json_data, fn):
+  fn = new_file_name(fn)
+  f = open(fn, 'w')
+  json.dump(json_data, f)
+  f.close()
+
 # avoid overwritting
 def new_file_name(x):
   i = 0
@@ -347,6 +354,7 @@ if __name__ == "__main__":
     fit_data_name = ipdt["output_dir"] + "/fit_data.dill"
     fit_test_name = ipdt["output_dir"] + "/fit_test.txt"
     fit_error_name = ipdt["output_dir"] + "/fit_error.txt"
+    summary_name = ipdt["output_dir"] + "/summary.txt"
     
     if not os.path.exists(ipdt["output_dir"]):
       os.mkdir(ipdt["output_dir"])
@@ -359,6 +367,8 @@ if __name__ == "__main__":
     }
     clus = read_cluster(**rcopts)
     dmax, dmin = find_max_min(clus, ipdt["min_max_ext_ratio"])
+    ip["extra"]["energy_max"] = dmax
+    ip["extra"]["energy_min"] = dmin
     random.shuffle(clus)
     nd = ipdt["degree_of_fitting"]
     
@@ -394,6 +404,8 @@ if __name__ == "__main__":
             npic_data += [x, y]
           if ipdt["scale_lengths"]:
             xmax, xmin = find_l_max_min(npic_data[0:6:2], ipdt["min_max_ext_ratio"])
+            ip["extra"][task]["coord_max"] = xmax
+            ip["extra"][task]["coord_min"] = xmin
             for i in range(0, 6, 2): npic_data[i] = trans_forward(npic_data[i], xmax, xmin)
         if ipdt["dump_data"]:
           print ('dump data ...')
@@ -490,6 +502,8 @@ if __name__ == "__main__":
             fit_data += [x, y]
           if ipdt["scale_lengths"]:
             xmax, xmin = find_l_max_min(fit_data[0:6:2], ipdt["min_max_ext_ratio"])
+            ip["extra"][task]["coord_max"] = xmax
+            ip["extra"][task]["coord_min"] = xmin
             for i in range(0, 6, 2): fit_data[i] = trans_forward(fit_data[i], xmax, xmin)
         if ipdt["dump_data"]:
           print ('dump data ...')
@@ -533,3 +547,7 @@ if __name__ == "__main__":
         if ipft["dump_network"]:
           print ('dump network ...')
           dump_data(name=fit_network_name, obj=fit_net)
+    
+    if ipdt["dump_summary"]:
+      print ('dump summary ...')
+      write_summary(ip, summary_name)

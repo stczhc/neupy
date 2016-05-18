@@ -367,12 +367,14 @@ if __name__ == "__main__":
     }
     clus = read_cluster(**rcopts)
     dmax, dmin = find_max_min(clus, ipdt["min_max_ext_ratio"])
+    ip["extra"] = {}
     ip["extra"]["energy_max"] = dmax
     ip["extra"]["energy_min"] = dmin
     random.shuffle(clus)
     nd = ipdt["degree_of_fitting"]
     
     for task in ip["task"]:
+      ip["extra"][task] = {}
       # NPI comparing
       if task == "npic":
         print ('create network ...')

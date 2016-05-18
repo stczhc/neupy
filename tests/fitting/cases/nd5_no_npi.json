@@ -24,7 +24,8 @@
         ],
         "exp_length": 0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true
+        "scale_lengths": true, 
+        "dump_summary": true
     },
     "npi_network": {
         "load_network": -1,
@@ -52,7 +53,7 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": -1,
+        "load_network": 0,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             60,

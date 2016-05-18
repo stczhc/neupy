@@ -121,7 +121,7 @@ def read_input(fn):
 def write_summary(json_data, fn):
   fn = new_file_name(fn)
   f = open(fn, 'w')
-  json.dump(json_data, f)
+  json.dump(json_data, f, indent=4)
   f.close()
 
 # avoid overwritting

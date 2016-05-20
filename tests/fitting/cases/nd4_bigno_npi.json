@@ -7,11 +7,11 @@
         "dump_data": false,
         "list_file": "../../data/tm_pt8/list.txt",
         "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
-        "output_dir": "../../data/nd5_no_npi", 
+        "output_dir": "../../data/nd4_bigno_npi", 
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
-        "degree_of_fitting": 5,
+        "degree_of_fitting": 4,
         "sample_number": [
             100000,
             10000,
@@ -24,7 +24,7 @@
         ],
         "exp_length": 0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true, 
+        "scale_lengths": true,
         "dump_summary": true
     },
     "npi_network": {
@@ -53,18 +53,18 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 3,
+        "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            60,
+            100,
+            50, 
             10, 
-            4, 
-            1
+            4
         ],
         "layer_types": [
-            "relu",
-            "relu", 
-            "relu", 
+            "tanh",
+            "tanh", 
+            "tanh", 
             "soft_plus"
         ],
         "step": 0.1,
@@ -74,7 +74,7 @@
         "use_npic": true,
         "train_network": true,
         "test_network": true,
-        "epochs": 1000,
+        "epochs": 800,
         "test_output": true, 
         "error_output": true
     }

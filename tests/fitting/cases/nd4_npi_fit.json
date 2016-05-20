@@ -53,7 +53,7 @@
     },
     "fit_network": {
         "load_npic_network": 0,
-        "load_network": 1,
+        "load_network": 3,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             80,
@@ -74,7 +74,7 @@
         "use_npic": true,
         "train_network": true,
         "test_network": true,
-        "epochs": 500,
+        "epochs": 1000,
         "test_output": true, 
         "error_output": true
     }

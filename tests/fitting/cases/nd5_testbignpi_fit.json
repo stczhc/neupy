@@ -1,13 +1,13 @@
 {
     "task": [
-        "fit" // "npic"
+        "fit"
     ],
     "data_files": {
-        "load_data": 0,
+        "load_data": "../../data/nd5_bignpi/fit_data.dill.0",
         "dump_data": false,
         "list_file": "../../data/tm_pt8/list.txt",
         "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
-        "output_dir": "../../data/nd5_no_npi", 
+        "output_dir": "../../data/nd5_testbignpi", 
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
@@ -22,17 +22,17 @@
             0.5,
             0.5
         ],
-        "exp_length": 0,
+        "exp_length": 5.0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true, 
+        "scale_lengths": false,
         "dump_summary": true
     },
     "npi_network": {
-        "load_network": -1,
+        "load_network": 1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            30, // the first layer output size
-            20 // the second layer output size
+            100, // the first layer output size
+            40 // the second layer output size
         ],
         "layer_types": [
             "tanh",
@@ -47,19 +47,19 @@
         "calibrate_method": "square_max", // abs_max, square_max, diff_norm
         "train_network": true,
         "test_network": true,
-        "epochs": 500,
+        "epochs": 800,
         "test_output": true, 
         "error_output": true
     },
     "fit_network": {
-        "load_npic_network": -1,
-        "load_network": 3,
+        "load_npic_network": "../../data/nd5_bignpi/npic_network.dill.2",
+        "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            60,
-            10, 
-            4, 
-            1
+            50,
+            80, 
+            30, 
+            6
         ],
         "layer_types": [
             "relu",
@@ -67,14 +67,14 @@
             "relu", 
             "soft_plus"
         ],
-        "step": 0.1,
+        "step": 0.005,
         "batch_size": 50,
-        "momentum": 0.8,
-        "show_epoch": 2,
+        "momentum": 0.9,
+        "show_epoch": 1,
         "use_npic": true,
         "train_network": true,
         "test_network": true,
-        "epochs": 1000,
+        "epochs": 800,
         "test_output": true, 
         "error_output": true
     }

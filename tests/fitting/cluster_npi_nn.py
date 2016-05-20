@@ -250,7 +250,7 @@ def load_datag(i):
   if isinstance(i, str):
     c = i
   else:
-    c = 'data/train_data.dill.' + str(i)
+    c = 'data/old/train_data.dill.' + str(i)
   print 'data load at ' + c
   with open(c, 'rb') as f:
     return dill.load(f)
@@ -259,7 +259,7 @@ def load(i):
   if isinstance(i, str):
     c = i
   else:
-    c = 'data/network-storage.dill.' + str(i)
+    c = 'data/old/network-storage.dill.' + str(i)
   print 'load at ' + c
   with open(c, 'rb') as f:
     return dill.load(f)
@@ -296,7 +296,8 @@ else:
   if lload_data:
     x_train, y_train, x_test, y_test = load_datag(0)
   else:
-    old_network = load('data/nip.dill.2')
+    old_network = load('data/old/nip.dill.2')
+    # print old_network; print old_network.layers[4].power; exit(0)
     pre_network = network = algorithms.Momentum(
       [
         ACT(old_network.layers[0].size, ndim=2), # 28 x 1 -> 28 x 50
@@ -314,7 +315,7 @@ print len(x_train), len(y_train), len(x_test), len(y_test)
 
 environment.reproducible()
 
-load_i = 14
+load_i = 15
 load_sim = False
 print 'construct network ...'
 if not lcmp:
@@ -377,7 +378,7 @@ else:
   print (x_train[0], y_train[0])
 if not load_sim:
   network.train(x_train, y_train, x_test, y_test, epochs=500)
-
+  # pass
 y_pre = network.predict(x_test)
 if lcmp:
   input_data = network.format_input_data(x_test)
@@ -399,7 +400,7 @@ ntotal = len(y_pre)
 nr = 0
 for x, y, y2 in zip(y_test, y_pre, y_pre2):
   # if lcmp: y = [y,1] if y > 0.5 else [y,0]
-  print x, y, y2
+  # print x, y, y2
   if lcmp:
     if not load_sim:
       if x[y] == 1: nr += 1

@@ -1,13 +1,13 @@
 {
     "task": [
-        "fit" // "npic"
+        "npic"
     ],
     "data_files": {
-        "load_data": 0,
-        "dump_data": false,
-        "list_file": "../../data/tm_pt8/list.txt",
-        "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
-        "output_dir": "../../data/nd5_no_npi", 
+        "load_data": -1,
+        "dump_data": true,
+        "list_file": "../../data/tmpt8all/list.txt",
+        "struct_file": "../../data/tmpt8all/structs/final_#.xyz",
+        "output_dir": "../../data/all_nd5_bignpi", 
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
@@ -22,17 +22,17 @@
             0.5,
             0.5
         ],
-        "exp_length": 0,
+        "exp_length": 5.0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true, 
+        "scale_lengths": false,
         "dump_summary": true
     },
     "npi_network": {
         "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            30, // the first layer output size
-            20 // the second layer output size
+            100, // the first layer output size
+            50 // the second layer output size
         ],
         "layer_types": [
             "tanh",
@@ -43,8 +43,8 @@
         "batch_size": 10,
         "momentum": 0.8,
         "show_epoch": 2,
-        "exponential": 10.0,
-        "calibrate_method": "square_max", // abs_max, square_max, diff_norm
+        "exponential": 15.0,
+        "calibrate_method": "abs_max", // abs_max, square_max, diff_norm
         "train_network": true,
         "test_network": true,
         "epochs": 500,
@@ -53,28 +53,28 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 3,
+        "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            60,
+            100,
+            50, 
             10, 
-            4, 
-            1
+            4
         ],
         "layer_types": [
-            "relu",
-            "relu", 
-            "relu", 
+            "tanh",
+            "tanh", 
+            "tanh", 
             "soft_plus"
         ],
         "step": 0.1,
-        "batch_size": 50,
+        "batch_size": 100,
         "momentum": 0.8,
         "show_epoch": 2,
         "use_npic": true,
         "train_network": true,
         "test_network": true,
-        "epochs": 1000,
+        "epochs": 500,
         "test_output": true, 
         "error_output": true
     }

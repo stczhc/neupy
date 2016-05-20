@@ -427,7 +427,7 @@ if __name__ == "__main__":
           ipd = npic_net.format_input_data(npic_data[4])
           nsqm = -1
           for i in range(len(npic_net.layers)):
-            if isinstance(npic_net.layers[i], layers.SquareMax):
+            if isinstance(npic_net.layers[i], layer_dic[ippn["calibrate_method"]]):
               nsqm = i
               break
           f = theano.function(inputs=[npic_net.variables.network_input],

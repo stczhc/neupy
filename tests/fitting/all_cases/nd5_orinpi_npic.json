@@ -3,8 +3,8 @@
         "npic"
     ],
     "data_files": {
-        "load_data": 0,
-        "dump_data": false,
+        "load_data": -1,
+        "dump_data": true,
         "list_file": "../../data/tm_pt8/list.txt",
         "struct_file": "../../data/tm_pt8/structs/final_#.xyz",
         "output_dir": "../../data/nd5_orinpi", 
@@ -28,7 +28,7 @@
         "dump_summary": true
     },
     "npi_network": {
-        "load_network": 0,
+        "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             100, // the first layer output size

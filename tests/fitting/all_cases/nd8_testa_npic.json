@@ -11,11 +11,11 @@
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
-        "degree_of_fitting": 8,
+        "degree_of_fitting": 4,
         "sample_number": [
-            10000,
-            1000,
-            1000
+            20000,
+            2000,
+            2000
         ], // train, validate, test
         "sample_ratio": [
             9.0,
@@ -32,7 +32,7 @@
         "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            100, // the first layer output size
+            50, // the first layer output size
             30 // the second layer output size
         ],
         "layer_types": [

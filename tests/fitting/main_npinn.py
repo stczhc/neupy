@@ -226,6 +226,17 @@ def get_length_new(n):
       mi += 1
   return zz
 
+def get_length_self_new(n):
+  m = n * (n + 1) / 2
+  zz = np.zeros((2, m), dtype=int)
+  mi = 0
+  for i in range(0, n):
+    for j in range(0, i + 1):
+      zz[0, mi] = i
+      zz[1, mi] = j
+      mi += 1
+  return zz
+
 def test_trans_data(x, y, num):
   n = len(x)
   gl = all_per_new(num)
@@ -240,7 +251,12 @@ def test_trans_data(x, y, num):
     if not (l == yy).all():
       print (l == yy)
 
-def trans_data_new(clus, n, num, typed, npi_network=None):
+def ipsize_new(n, d_order=False):
+  size = n * (n - 1) / 2
+  if d_order: size = size + size * (size + 1) / 2
+  return size
+
+def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
   sn = n
   if typed == 'npic':
     print ('prepare original coords array ...')
@@ -255,7 +271,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     pp = all_per_new(num)
     p = np.zeros((sn, 2, len(pp[0])), dtype=int)
     pn = len(pp)
-    x_d = np.zeros((n, 2, len(pp[0])))
+    x_d = np.zeros((n, 2, ipsize_new(num, d_order)))
     for i in xrange(0, sn / 2):
       ind = random.randrange(pn)
       ind2 = random.randrange(pn)
@@ -277,17 +293,22 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     print ('apply permutation ...')
     xnn = x.shape[0]
     gl = get_length_new(num)
+    gls = get_length_self_new(len(pp[0]))
     expl = clus[0].exp_length
     if expl == 0:
       for i in xrange(0, n):
         idx = random.randrange(0, xnn)
         xdr = np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1)
-        x_d[i] = xdr[xp[i]]
+        xdr = xdr[xp[i]]
+        x_d[i, 0:len(xdr)] = xdr
+        if d_order: x_d[i, len(xdr):] = xdr[gls[0]] * xdr[gls[1]]
     else:
       for i in xrange(0, n):
         idx = random.randrange(0, xnn)
         xdr = np.exp(-np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1) / expl)
-        x_d[i] = xdr[xp[i]]
+        xdr = xdr[xp[i]]
+        x_d[i, 0:len(xdr)] = xdr
+        if d_order: x_d[i, len(xdr):] = xdr[gls[0]] * xdr[gls[1]]
   return x_d, y_d
 
 # transform training data, test data
@@ -419,22 +440,6 @@ def create_network(ipdata, size, typed):
     "show_epoch": ipdata["show_epoch"] }
   return algorithms.Momentum(x_layers, **opts)
 
-# nd is degree of fitting
-def create_npic_network(ipdata, nd):
-  size = nd * (nd - 1) / 2
-  # size = size + size * (size + 1) / 2
-  return create_network(ipdata, size, "npic")
-
-# nd is degree of fitting
-def create_npi_network(ipdata, nd):
-  size = nd * (nd - 1) / 2
-  # size = size + size * (size + 1) / 2
-  return create_network(ipdata, size, "npi")
-
-# ipsize is from the output size of npi network
-def create_fit_network(ipdata, ipsize):
-  return create_network(ipdata, ipsize, "fit")
-
 # transfer weight and bias from neta to netb
 def transfer_parameters(neta, netb):
   n = len(netb.layers)
@@ -491,7 +496,7 @@ if __name__ == "__main__":
           else:
             npic_net = load_data(name=ippn["load_network"])
         else:
-          npic_net = create_npic_network(ippn, nd)
+          npic_net = create_network(ippn, ipsize_new(nd, ipdt['second_order']), 'npic')
         
         print ('transfrom data ...')
         if ipdt["load_data"] != -1:
@@ -576,9 +581,9 @@ if __name__ == "__main__":
             fit_net = load_data(name=ipft["load_network"])
         else:
           if ipft["load_npic_network"] != -1:
-            fit_net = create_fit_network(ipft, ippn["sizes"][-1])
+            fit_net = create_network(ipft, ippn["sizes"][-1], 'fit')
           else:
-            fit_net = create_fit_network(ipft, nd * (nd - 1) / 2)
+            fit_net = create_network(ipft, nd * (nd - 1) / 2, 'fit')
         
         print ('transfrom data ...')
         if ipdt["load_data"] != -1:
@@ -593,7 +598,7 @@ if __name__ == "__main__":
               npic_net = load_data(name=npic_network_name, i=ipft["load_npic_network"])
             else:
               npic_net = load_data(name=ippn["load_network"])
-            npi_net = create_npi_network(ippn, nd)
+            npi_net = create_network(ippn, ipsize_new(nd, ipdt['second_order']), 'npi')
             transfer_parameters(npic_net, npi_net)
           else:
             npi_net = None

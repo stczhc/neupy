@@ -213,7 +213,6 @@ def all_per_new(n):
     for j in range(len(zz)):
       zr[j] = zd[(lxr[i][zz[j][0]], lxr[i][zz[j][1]])]
     zzp[i] = zr
-  print zzp
   return zzp
 
 def get_length_new(n):
@@ -525,7 +524,7 @@ if __name__ == "__main__":
         print ('output data shape: ', npic_data[1].shape)
         print ('first input data: \n', npic_data[0])
         print ('first output data: \n', npic_data[1])
-        test_trans_data(npic_data[0], npic_data[1], nd)
+        # test_trans_data(npic_data[0], npic_data[1], nd)
         print (npic_data[0].dtype, npic_data[1].dtype)
         
         if ippn["train_network"]:

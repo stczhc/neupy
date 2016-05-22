@@ -302,7 +302,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
         xdr = np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1)
         xdr = xdr[xp[i]]
         x_d[i, :, 0:lend] = xdr
-        if d_order: x_d[i, :, lend:] = xdr[gls[0]] * xdr[gls[1]]
+        if d_order: x_d[i, :, lend:] = xdr[:, gls[0]] * xdr[:, gls[1]]
     else:
       for i in xrange(0, n):
         idx = random.randrange(0, xnn)

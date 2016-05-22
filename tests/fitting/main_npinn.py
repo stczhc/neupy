@@ -270,6 +270,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     else:
       for i in xrange(0, n):
         idx = range(0, xnn)
+        print x[idx][gl[0]] - x[idx][gl[1]]
         xdr = np.exp(-np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]], axis=1) / expl)
         x_d[i] = xdr[p[i]]
   return x_d, y_d

@@ -1,6 +1,6 @@
 {
     "task": [
-        "npic"
+        "fit"
     ],
     "data_files": {
         "load_data": -1,
@@ -53,7 +53,7 @@
         "error_output": true
     },
     "fit_network": {
-        "load_npic_network": -1,
+        "load_npic_network": 2,
         "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto

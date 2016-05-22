@@ -258,7 +258,34 @@ def ipsize_new(n, d_order=False):
 
 def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
   sn = n
-  if typed == 'npic':
+  if typed == 'fit':
+    print ('prepare original coords array ...')
+    xn = len(clus)
+    gn = clus[0].n
+    lx = [list(g) for g in itertools.combinations(range(0, gn), num)]
+    gl = get_length_new(num)
+    gls = get_length_self_new(len(gl[0]))
+    lend = len(gl[0])
+    x_d = np.zeros((n, len(lx), ipsize_new(num, d_order)))
+    if not npi_network is None:
+      x_dx = np.zeros((n, len(lx), npi_network.output_layer.size))
+    y_d = np.zeros((n, ))
+    x = np.zeros((len(clus) * (gn + 1 - num), len(lx), num, 3))
+    for i in range(n):
+      if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
+      ind = random.randrange(xn)
+      cl = clus[ind]
+      cl.shuffle()
+      xx = cl.atoms[lx]
+      xx = np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2)
+      x_d[i, :, 0:lend] = xx
+      if d_order: 
+        x_d[i, :, lend:] = xx[:, gls[0]] * xx[:, gls[1]]
+      if not npi_network is None:
+        x_dx[i] = npi_network.predict(x_d[i])
+      y_d[i] = cl.energy
+    if not npi_network is None: x_d = x_dx
+  elif typed == 'npic':
     print ('prepare original coords array ...')
     xn = len(clus)
     gn = clus[0].n
@@ -615,8 +642,8 @@ if __name__ == "__main__":
             rend = rstart + ratio
             nstart, nend = int(nclus * rstart), int(nclus * rend)
             rstart = rend
-            x, y = trans_data(clus, ipdt["sample_number"][i], nd, 
-              typed="fit", npi_network=npi_net)
+            x, y = trans_data_new(clus, ipdt["sample_number"][i], nd, 
+              typed="fit", npi_network=npi_net, d_order=ipdt['second_order'])
             y = trans_forward(y, dmax, dmin)
             fit_data += [x, y]
           if ipdt["scale_lengths"]:

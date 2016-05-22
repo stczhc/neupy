@@ -260,8 +260,11 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     pn = len(pp)
     x_d = np.zeros((n, 2, len(pp[0])))
     for i in xrange(0, sn / 2):
-      p[i][0] = pp[random.randrange(pn)]
-      p[i][1] = pp[random.randrange(pn)]
+      ind = random.randrange(pn)
+      ind2 = random.randrange(pn)
+      p[i][0] = pp[ind]
+      while ind2 == ind: ind2 = random.randrange(pn)
+      p[i][1] = pp[ind2]
     for i in xrange(sn / 2, sn):
       if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
       p[i][0] = pp[random.randrange(pn)]
@@ -509,7 +512,7 @@ if __name__ == "__main__":
             rend = rstart + ratio
             nstart, nend = int(nclus * rstart), int(nclus * rend)
             rstart = rend
-            x, y = trans_data(clus, ipdt["sample_number"][i], nd, typed="npic")
+            x, y = trans_data_new(clus, ipdt["sample_number"][i], nd, typed="npic")
             npic_data += [x, y]
           if ipdt["scale_lengths"]:
             xmax, xmin = find_l_max_min(npic_data[0:6:2], ipdt["min_max_ext_ratio"])

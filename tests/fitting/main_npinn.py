@@ -234,7 +234,7 @@ def test_trans_data(x, y, num):
     yy = y[i]
     l = [0, 1]
     for g in gl:
-      if (x[i][1] == xx[g]).all():
+      if ((x[i][1] - xx[g]) < 1E-10).all():
         l = [1, 0]
         break
     print l == yy

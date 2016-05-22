@@ -525,6 +525,7 @@ if __name__ == "__main__":
         print ('first input data: \n', npic_data[0])
         print ('first output data: \n', npic_data[1])
         test_trans_data(npic_data[0], npic_data[1], nd)
+        print (npic_data[0].dtype, npic_data[1].dtype)
         
         if ippn["train_network"]:
           print ('train network ...')

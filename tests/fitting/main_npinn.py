@@ -22,6 +22,18 @@ print (os.getcwd())
 environment.reproducible()
 httoev = 27.21138505
 
+un = 8
+mat_x = []
+mat_xr = []
+ee = np.eye(un, dtype=int)
+for i in range(1, un + 1):
+  lx = [list(g) for g in itertools.combinations(range(0, un), i)]
+  lx = np.asarray(lx)
+  mat_x.append(lx)
+  lxr = [list(g) for g in itertools.permutations(range(0, i))]
+  lxr = np.asarray(lxr)
+  mat_xr.append(lxr)
+
 # the homogeneous cluster
 class Cluster(object):
   def __init__(self, n, expl):
@@ -29,18 +41,8 @@ class Cluster(object):
     self.atoms = np.zeros((n, 3))
     self.elems = [''] * n
     self.energy = 0.0
-    self.mat_x = []
-    self.mat_xr = []
     self.mat_ll = []
     self.exp_length = expl
-    ee = np.eye(n, dtype=int)
-    for i in range(1, n + 1):
-      lx = [list(g) for g in itertools.combinations(range(0, n), i)]
-      lx = np.asarray(lx)
-      self.mat_x.append(lx)
-      lxr = [list(g) for g in itertools.permutations(range(0, i))]
-      lxr = np.asarray(lxr)
-      self.mat_xr.append(lxr)
   
   # assign mat_ll values
   def gen_ll(self):
@@ -52,7 +54,7 @@ class Cluster(object):
   
   # generate lengths of all permutations of atoms
   def gen_per_ll(self, num):
-    lx = self.mat_xr[num - 1]
+    lx = mat_xr[num - 1]
     ll = []
     for g in lx:
       lc = []
@@ -80,7 +82,7 @@ class Cluster(object):
   # generate lengths. Those atoms are selected by all combinations
   def get_lengths_x(self, num=None):
     if num is None: num = self.n
-    xx = self.mat_x[num - 1]
+    xx = mat_x[num - 1]
     ll = self.mat_ll
     r = []
     for k in range(0, xx.shape[0]):

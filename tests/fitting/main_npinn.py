@@ -217,7 +217,7 @@ def all_per_new(n):
 
 def get_length_new(n):
   m = n * (n - 1) / 2
-  zz = np.zeros((2, m))
+  zz = np.zeros((2, m), dtype=int)
   mi = 0
   for i in range(0, n):
     for j in range(0, i):
@@ -241,7 +241,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     pp = all_per_new(num)
     p = np.zeros((sn, 2, len(pp[0])))
     pn = len(pp)
-    x_d = np.zeros((n, pn))
+    x_d = np.zeros((n, 2, pn))
     for i in xrange(0, sn / 2):
       p[i][0] = pp[random.randrange(pn)]
       p[i][1] = pp[random.randrange(pn)]
@@ -260,9 +260,17 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     print ('apply permutation ...')
     xnn = x.shape[0]
     gl = get_length_new(num)
-    for i in xrange(0, n):
-      idx = range(0, xnn)
-      x_d[i] = np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]])
+    expl = clus[0].exp_length
+    if expl == 0:
+      for i in xrange(0, n):
+        idx = range(0, xnn)
+        xdr = np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]])
+        x_d[i] = xdr[p[i]]
+    else:
+      for i in xrange(0, n):
+        idx = range(0, xnn)
+        xdr = np.exp(-np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]]) / expl)
+        x_d[i] = xdr[p[i]]
   return x_d, y_d
 
 # transform training data, test data

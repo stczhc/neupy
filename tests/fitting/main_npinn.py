@@ -520,7 +520,7 @@ if __name__ == "__main__":
         print ('output data shape: ', npic_data[1].shape)
         print ('first input data: \n', npic_data[0])
         print ('first output data: \n', npic_data[1])
-        test_trans_data(npic_data[0, 0:100], npic_data[1, 0:100], nd)
+        test_trans_data(npic_data[0], npic_data[1], nd)
         
         if ippn["train_network"]:
           print ('train network ...')

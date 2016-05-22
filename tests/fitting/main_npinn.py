@@ -66,10 +66,10 @@ class Cluster(object):
         for i in range(0, num):
           for j in range(0, i):
             lc.append(np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]))
-      # nr = len(lc)
-      # for i in range(0, nr):
-      #   for j in range(0, i + 1): # added self-square here
-      #     lc.append(lc[i] * lc[j])
+      nr = len(lc)
+      for i in range(0, nr):
+        for j in range(0, i + 1): # added self-square here
+          lc.append(lc[i] * lc[j])
       ll.append(lc)
     return ll
   

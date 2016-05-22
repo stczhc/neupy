@@ -231,7 +231,7 @@ def get_length_new(n):
 
 def test_trans_data(x, y, num):
   n = len(x)
-  gl = all_per(num)
+  gl = all_per_new(num)
   for i in range(0, n):
     xx = x[i, 0]
     yy = y[i]

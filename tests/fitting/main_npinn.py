@@ -237,9 +237,14 @@ def test_trans_data(x, y, num):
     yy = y[i]
     l = [0, 1]
     for g in gl:
+      print g
+      print x[i][0]
+      print xx[g]
+      print x[i][1]
       if ((x[i][1] - xx[g]) < 1E-5).all():
         l = [1, 0]
         break
+    exit(0)
     print l == yy
 
 def trans_data_new(clus, n, num, typed, npi_network=None):

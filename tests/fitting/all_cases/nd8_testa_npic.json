@@ -32,7 +32,7 @@
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             100, // the first layer output size
-            50 // the second layer output size
+            30 // the second layer output size
         ],
         "layer_types": [
             "tanh",

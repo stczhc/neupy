@@ -216,8 +216,6 @@ def all_per_new(n):
   print zzp
   return zzp
 
-all_per_new(4)
-
 def get_length_new(n):
   m = n * (n - 1) / 2
   zz = np.zeros((2, m), dtype=int)

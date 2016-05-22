@@ -240,7 +240,8 @@ def test_trans_data(x, y, num):
       if ((x[i][1] - xx[g]) < 1E-10).all():
         l = [1, 0]
         break
-    print l == yy
+    if not (l == yy).all():
+      print (l == yy)
 
 def trans_data_new(clus, n, num, typed, npi_network=None):
   sn = n

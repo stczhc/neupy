@@ -239,7 +239,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
         x[i * xn + j] = clus[j].atoms[0:num]
     print ('prepare permutation array ...')
     pp = all_per_new(num)
-    p = np.zeros((sn, 2, len(pp[0])))
+    p = np.zeros((sn, 2, len(pp[0])), dtype=int)
     pn = len(pp)
     x_d = np.zeros((n, 2, pn))
     for i in xrange(0, sn / 2):

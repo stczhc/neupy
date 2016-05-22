@@ -230,11 +230,11 @@ def test_trans_data(x, y, num):
   n = len(x)
   gl = get_length_new(num)
   for i in range(0, n):
-    xx = x[i]
+    xx = x[i][0]
     yy = y[i]
     l = [0, 1]
     for g in gl:
-      if yy == xx[g]:
+      if x[i][1] == xx[g]:
         l = [1, 0]
         break
     print l == yy
@@ -520,7 +520,7 @@ if __name__ == "__main__":
         print ('output data shape: ', npic_data[1].shape)
         print ('first input data: \n', npic_data[0])
         print ('first output data: \n', npic_data[1])
-        test_trans_data(fit_data[0, 0:100], fit_data[1, 0:100], nd)
+        test_trans_data(npic_data[0, 0:100], npic_data[1, 0:100], nd)
         
         if ippn["train_network"]:
           print ('train network ...')

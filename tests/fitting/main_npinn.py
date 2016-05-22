@@ -230,7 +230,7 @@ def test_trans_data(x, y, num):
   n = len(x)
   gl = get_length_new(num)
   for i in range(0, n):
-    xx = x[i][0]
+    xx = x[i, 0]
     yy = y[i]
     l = [0, 1]
     for g in gl:

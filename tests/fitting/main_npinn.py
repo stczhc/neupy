@@ -309,7 +309,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
         xdr = np.exp(-np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1) / expl)
         xdr = xdr[xp[i]]
         x_d[i, :, 0:lend] = xdr
-        if d_order: x_d[i, :, lend:] = xdr[gls[0]] * xdr[gls[1]]
+        if d_order: x_d[i, :, lend:] = xdr[:, gls[0]] * xdr[:, gls[1]]
   return x_d, y_d
 
 # transform training data, test data

@@ -11,6 +11,10 @@ from neupy import environment
 
 import theano
 import theano.tensor as T
+from sys import platform as _platform
+
+if _platform == 'darwin':
+  theano.config.cxx = "/usr/local/bin/g++-5"
 
 print (neupy.__version__)
 print (theano.config.base_compiledir)
@@ -26,6 +30,7 @@ class Cluster(object):
     self.elems = [''] * n
     self.energy = 0.0
     self.mat_x = []
+    self.mat_xr = []
     self.mat_ll = []
     self.exp_length = expl
     ee = np.eye(n, dtype=int)
@@ -33,6 +38,9 @@ class Cluster(object):
       lx = [list(g) for g in itertools.combinations(range(0, n), i)]
       lx = np.asarray(lx)
       self.mat_x.append(lx)
+      lxr = [list(g) for g in itertools.combinations(range(0, i))]
+      lxr = np.asarray(lxr)
+      self.mat_xr.append(lxr)
   
   # assign mat_ll values
   def gen_ll(self):
@@ -44,7 +52,7 @@ class Cluster(object):
   
   # generate lengths of all permutations of atoms
   def gen_per_ll(self, num):
-    lx = [list(g) for g in itertools.permutations(range(0, num))]
+    lx = self.mat_xr[num - 1]
     ll = []
     for g in lx:
       lc = []

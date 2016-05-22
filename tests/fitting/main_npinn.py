@@ -226,6 +226,19 @@ def get_length_new(n):
       mi += 1
   return zz
 
+def test_trans_data(x, y, num):
+  n = len(x)
+  gl = get_length_new(num)
+  for i in range(0, n):
+    xx = x[i]
+    yy = y[i]
+    l = [0, 1]
+    for g in gl:
+      if yy == xx[g]:
+        l = [1, 0]
+        break
+    print l == yy
+
 def trans_data_new(clus, n, num, typed, npi_network=None):
   sn = n
   if typed == 'npic':
@@ -241,7 +254,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     pp = all_per_new(num)
     p = np.zeros((sn, 2, len(pp[0])), dtype=int)
     pn = len(pp)
-    x_d = np.zeros((n, 2, pn))
+    x_d = np.zeros((n, 2, len(pp[0])))
     for i in xrange(0, sn / 2):
       p[i][0] = pp[random.randrange(pn)]
       p[i][1] = pp[random.randrange(pn)]
@@ -263,15 +276,13 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
     expl = clus[0].exp_length
     if expl == 0:
       for i in xrange(0, n):
-        idx = range(0, xnn)
-        print x[idx][gl[0]] - x[idx][gl[1]]
-        xdr = np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]], axis=1)
+        idx = random.randrange(0, xnn)
+        xdr = np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1)
         x_d[i] = xdr[p[i]]
     else:
       for i in xrange(0, n):
-        idx = range(0, xnn)
-        print x[idx][gl[0]] - x[idx][gl[1]]
-        xdr = np.exp(-np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]], axis=1) / expl)
+        idx = random.randrange(0, xnn)
+        xdr = np.exp(-np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1) / expl)
         x_d[i] = xdr[p[i]]
   return x_d, y_d
 
@@ -509,6 +520,7 @@ if __name__ == "__main__":
         print ('output data shape: ', npic_data[1].shape)
         print ('first input data: \n', npic_data[0])
         print ('first output data: \n', npic_data[1])
+        test_trans_data(fit_data[0, 0:100], fit_data[1, 0:100], nd)
         
         if ippn["train_network"]:
           print ('train network ...')

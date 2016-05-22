@@ -38,7 +38,7 @@ class Cluster(object):
       lx = [list(g) for g in itertools.combinations(range(0, n), i)]
       lx = np.asarray(lx)
       self.mat_x.append(lx)
-      lxr = [list(g) for g in itertools.combinations(range(0, i))]
+      lxr = [list(g) for g in itertools.permutations(range(0, i))]
       lxr = np.asarray(lxr)
       self.mat_xr.append(lxr)
   
@@ -190,6 +190,77 @@ def read_cluster(ener, xyz, ecut, expl, traj):
       cc += 2 + cn
   print 'structs loaded: ', len(clul)
   return clul
+
+# all permutation of atoms of a length list
+# return matrix of indices
+def all_per_new(n):
+  m = n * (n - 1) / 2
+  zz = [ None ] * m
+  zd = {}
+  m = 0
+  for i in range(0, n):
+    for j in range(0, i):
+      zz[m] = (i, j)
+      zd[(i, j)] = m
+      zd[(j, i)] = m
+      m += 1
+  lxr = [list(g) for g in itertools.permutations(range(0, n))]
+  zzp = [ None ] * len(lxr)
+  for i in range(len(lxr)):
+    zr = [ None ] * len(zz)
+    for j in range(len(zz)):
+      zr[j] = zd[(lxr[i][zz[j][0]], lxr[i][zz[j][1]])]
+    zzp[i] = zr
+  return zzp
+
+def get_length_new(n):
+  m = n * (n - 1) / 2
+  zz = np.zeros((2, m))
+  mi = 0
+  for i in range(0, n):
+    for j in range(0, i):
+      zz[0, mi] = i
+      zz[1, mi] = j
+      mi += 1
+  return zz
+
+def trans_data_new(clus, n, num, typed, npi_network=None):
+  sn = n
+  if typed == 'npic':
+    print ('prepare original coords array ...')
+    xn = len(clus)
+    gn = clus[0].n
+    x = np.zeros((len(clus) * (gn + 1 - num), num, 3))
+    for i in range(0, gn + 1 - num):
+      for j in xrange(xn):
+        clus[j].shuffle()
+        x[i * xn + j] = clus[j].atoms[0:num]
+    print ('prepare permutation array ...')
+    pp = all_pre_new(num)
+    p = np.zeros(sn, 2, len(pp[0]))
+    pn = len(pp)
+    x_d = np.zeros((n, pn))
+    for i in xrange(0, sn / 2):
+      p[i][0] = pp[random.randrange(pn)]
+      p[i][1] = pp[random.randrange(pn)]
+    for i in xrange(sn / 2, sn):
+      p[i][0] = pp[random.randrange(pn)]
+      pl = list(pp[random.randrange(pn)])
+      while pl in pp:
+        random.shuffle(pl)
+      p[i][1] = pl
+    yp = np.asarray([[1, 0]] * (sn / 2) + [[0, 1]] * ( sn - sn / 2))
+    ip = xrange(0, sn)
+    random.shuffle(ip)
+    y_d = yp[ip]
+    xp = p[ip]
+    print ('apply permutation ...')
+    xnn = x.shape[0]
+    gl = get_length_new(num)
+    for i in xrange(0, n):
+      idx = range(0, xnn)
+      x_d[i] = np.linalg.norm(x[idx][gl[0]] - x[idx][gl[1]])
+  return x_d, y_d
 
 # transform training data, test data
 # clus: the list of Cluster
@@ -410,7 +481,7 @@ if __name__ == "__main__":
             rend = rstart + ratio
             nstart, nend = int(nclus * rstart), int(nclus * rend)
             rstart = rend
-            x, y = trans_data(clus, ipdt["sample_number"][i], nd, typed="npic")
+            x, y = trans_data_new(clus, ipdt["sample_number"][i], nd, typed="npic")
             npic_data += [x, y]
           if ipdt["scale_lengths"]:
             xmax, xmin = find_l_max_min(npic_data[0:6:2], ipdt["min_max_ext_ratio"])

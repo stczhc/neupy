@@ -66,10 +66,10 @@ class Cluster(object):
         for i in range(0, num):
           for j in range(0, i):
             lc.append(np.linalg.norm(self.atoms[g[i]] - self.atoms[g[j]]))
-      nr = len(lc)
-      for i in range(0, nr):
-        for j in range(0, i + 1): # added self-square here
-          lc.append(lc[i] * lc[j])
+      # nr = len(lc)
+      # for i in range(0, nr):
+      #   for j in range(0, i + 1): # added self-square here
+      #     lc.append(lc[i] * lc[j])
       ll.append(lc)
     return ll
   
@@ -418,13 +418,13 @@ def create_network(ipdata, size, typed):
 # nd is degree of fitting
 def create_npic_network(ipdata, nd):
   size = nd * (nd - 1) / 2
-  size = size + size * (size + 1) / 2
+  # size = size + size * (size + 1) / 2
   return create_network(ipdata, size, "npic")
 
 # nd is degree of fitting
 def create_npi_network(ipdata, nd):
   size = nd * (nd - 1) / 2
-  size = size + size * (size + 1) / 2
+  # size = size + size * (size + 1) / 2
   return create_network(ipdata, size, "npi")
 
 # ipsize is from the output size of npi network
@@ -505,7 +505,7 @@ if __name__ == "__main__":
             rend = rstart + ratio
             nstart, nend = int(nclus * rstart), int(nclus * rend)
             rstart = rend
-            x, y = trans_data_new(clus, ipdt["sample_number"][i], nd, typed="npic")
+            x, y = trans_data(clus, ipdt["sample_number"][i], nd, typed="npic")
             npic_data += [x, y]
           if ipdt["scale_lengths"]:
             xmax, xmin = find_l_max_min(npic_data[0:6:2], ipdt["min_max_ext_ratio"])

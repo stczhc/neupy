@@ -508,7 +508,7 @@ if __name__ == "__main__":
             rend = rstart + ratio
             nstart, nend = int(nclus * rstart), int(nclus * rend)
             rstart = rend
-            x, y = trans_data(clus, ipdt["sample_number"][i], nd, typed="npic")
+            x, y = trans_data_new(clus, ipdt["sample_number"][i], nd, typed="npic")
             npic_data += [x, y]
           if ipdt["scale_lengths"]:
             xmax, xmin = find_l_max_min(npic_data[0:6:2], ipdt["min_max_ext_ratio"])

@@ -213,6 +213,7 @@ def all_per_new(n):
     for j in range(len(zz)):
       zr[j] = zd[(lxr[i][zz[j][0]], lxr[i][zz[j][1]])]
     zzp[i] = zr
+  print zzp
   return zzp
 
 def get_length_new(n):

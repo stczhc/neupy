@@ -271,6 +271,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
     pp = all_per_new(num)
     p = np.zeros((sn, 2, len(pp[0])), dtype=int)
     pn = len(pp)
+    lend = len(pp[0])
     x_d = np.zeros((n, 2, ipsize_new(num, d_order)))
     for i in xrange(0, sn / 2):
       ind = random.randrange(pn)
@@ -300,15 +301,15 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
         idx = random.randrange(0, xnn)
         xdr = np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1)
         xdr = xdr[xp[i]]
-        x_d[i, :, 0:len(xdr)] = xdr
-        if d_order: x_d[i, :, len(xdr):] = xdr[gls[0]] * xdr[gls[1]]
+        x_d[i, :, 0:lend] = xdr
+        if d_order: x_d[i, :, lend:] = xdr[gls[0]] * xdr[gls[1]]
     else:
       for i in xrange(0, n):
         idx = random.randrange(0, xnn)
         xdr = np.exp(-np.linalg.norm(x[idx, gl[0]] - x[idx, gl[1]], axis=1) / expl)
         xdr = xdr[xp[i]]
-        x_d[i, :, 0:len(xdr)] = xdr
-        if d_order: x_d[i, :, len(xdr):] = xdr[gls[0]] * xdr[gls[1]]
+        x_d[i, :, 0:lend] = xdr
+        if d_order: x_d[i, :, lend:] = xdr[gls[0]] * xdr[gls[1]]
   return x_d, y_d
 
 # transform training data, test data

@@ -238,21 +238,22 @@ def trans_data_new(clus, n, num, typed, npi_network=None):
         clus[j].shuffle()
         x[i * xn + j] = clus[j].atoms[0:num]
     print ('prepare permutation array ...')
-    pp = all_pre_new(num)
-    p = np.zeros(sn, 2, len(pp[0]))
+    pp = all_per_new(num)
+    p = np.zeros((sn, 2, len(pp[0])))
     pn = len(pp)
     x_d = np.zeros((n, pn))
     for i in xrange(0, sn / 2):
       p[i][0] = pp[random.randrange(pn)]
       p[i][1] = pp[random.randrange(pn)]
     for i in xrange(sn / 2, sn):
+      if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
       p[i][0] = pp[random.randrange(pn)]
       pl = list(pp[random.randrange(pn)])
       while pl in pp:
         random.shuffle(pl)
       p[i][1] = pl
     yp = np.asarray([[1, 0]] * (sn / 2) + [[0, 1]] * ( sn - sn / 2))
-    ip = xrange(0, sn)
+    ip = range(0, sn)
     random.shuffle(ip)
     y_d = yp[ip]
     xp = p[ip]

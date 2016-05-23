@@ -432,7 +432,6 @@ layer_dic = {
 # update network parameters
 def update_network(net, ipdata):
   opts = { "error": "mse", "step": ipdata["step"], 
-    "verbose": False if typed == "npi" else True, 
     "batch_size": ipdata["batch_size"], "nesterov": True, 
     "momentum": ipdata["momentum"], "shuffle_data": True, 
     "show_epoch": ipdata["show_epoch"] }

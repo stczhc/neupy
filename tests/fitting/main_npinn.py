@@ -429,6 +429,16 @@ layer_dic = {
   "diff_norm": layers.DiffNorm
 }
 
+# update network parameters
+def update_network(net, ipdata):
+  opts = { "error": "mse", "step": ipdata["step"], 
+    "verbose": False if typed == "npi" else True, 
+    "batch_size": ipdata["batch_size"], "nesterov": True, 
+    "momentum": ipdata["momentum"], "shuffle_data": True, 
+    "show_epoch": ipdata["show_epoch"] }
+  for k, v in opts.items()
+    setattr(net, k, v)
+
 # construct npi_comparing network
 def create_network(ipdata, size, typed):
   x_layers = []
@@ -609,6 +619,7 @@ if __name__ == "__main__":
             fit_net = load_data(name=fit_network_name, i=ipft["load_network"])
           else:
             fit_net = load_data(name=ipft["load_network"])
+          update_network(fit_net, ipft)
         else:
           if ipft["load_npic_network"] != -1:
             fit_net = create_network(ipft, ippn["sizes"][-1], 'fit')

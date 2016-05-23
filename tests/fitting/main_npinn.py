@@ -436,7 +436,7 @@ def update_network(net, ipdata):
     "batch_size": ipdata["batch_size"], "nesterov": True, 
     "momentum": ipdata["momentum"], "shuffle_data": True, 
     "show_epoch": ipdata["show_epoch"] }
-  for k, v in opts.items()
+  for k, v in opts.items():
     setattr(net, k, v)
 
 # construct npi_comparing network

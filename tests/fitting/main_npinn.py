@@ -145,13 +145,13 @@ def new_file_name(x):
 
 def dump_data(name, obj):
   name = new_file_name(name)
-  print 'dump data: ' + name
+  print ('dump data: ' + name)
   with open(name, 'wb') as f:
     dill.dump(obj, f)
 
 def load_data(name, i=None):
   if not i is None: name += '.' + str(i)
-  print 'load data: ' + name
+  print ('load data: ' + name)
   with open(name, 'rb') as f:
     return dill.load(f)
 
@@ -339,6 +339,8 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
         if d_order: x_d[i, :, lend:] = xdr[:, gls[0]] * xdr[:, gls[1]]
   return x_d, y_d
 
+# the following has some problem because 
+# the length products are also swapped
 # transform training data, test data
 # clus: the list of Cluster
 # n: number of cases generated

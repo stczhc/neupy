@@ -162,13 +162,13 @@
     REAL(8), INTENT(inout)             :: x(n)
     REAL(8)                            :: lower_bound(n), upper_bound(n)
     INTEGER                                  :: nbd(n)
-    REAL(8)                            :: f, g(n)
+    REAL(8), INTENT(inout)             :: f, g(n)
     REAL(8), INTENT(in)                :: factr, pgtol
     REAL(8)                            :: wa(2*m*n + 5*n + 11*m*m + 8*m)
     INTEGER                                  :: iwa(3*n)
-    CHARACTER(LEN=60)                        :: task
+    CHARACTER(LEN=60), INTENT(inout)         :: task
     INTEGER                                  :: iprint
-    CHARACTER(LEN=60)                        :: csave
+    CHARACTER(LEN=60), INTENT(inout)         :: csave
     LOGICAL                                  :: lsave(4)
     INTEGER                                  :: isave(44)
     REAL(8)                            :: dsave(29)

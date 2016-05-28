@@ -8,10 +8,9 @@ class LBFGS(object):
   def longstr(self, x):
     return np.array(x + ' ' * (60 - len(x)))
   
-  def __init__(self, x, n):
+  def __init__(self, n):
     self.m = 4
     self.n = n
-    self.x = np.array(x, dtype=np.float64)
     self.stat = 0
     zb = np.zeros((n, ), dtype=np.float64)
     zi = np.zeros((n, ), dtype=np.int32)
@@ -32,14 +31,18 @@ class LBFGS(object):
     self.isave = np.zeros(44, dtype=np.int32)
     self.dsave = np.zeros(29, dtype=np.float64)
     self.csave = np.array(' ' * 60)
-    self.task = self.longstr('START')
     self.grad_conv = 1E-8
     self.max_iter = 200
-    self._invoke()
     self.log_file = 0
-    self.traj = []
-    self.traj.append(np.array(self.x, dtype=np.float64))
     self.p = self.F()
+  
+  def start(self, x):
+    self.x = np.array(x, dtype=np.float64)
+    self.f = np.array(self.p.eval(self.x), dtype=np.float64)
+    self.traj = []
+    self.traj.append([np.array(self.x, dtype=np.float64), self.f])
+    self.task = self.longstr('START')
+    self._invoke()
   
   def _invoke(self):
     cp_lbfgs.setulb(self.m, self.x, self.lb, self.ub, self.kb, 
@@ -109,7 +112,7 @@ class LBFGS(object):
       if self.iter >= self.max_iter:
         self.stat = 5
         break
-      self.traj.append(np.array(self.x, dtype=np.float64))
+      self.traj.append([np.array(self.x, dtype=np.float64), self.f])
     if self.iter >= self.max_iter:
       if self.log_file != 0: print ('Maximum number of iteration reached.')
     if self.stat == 5: ierr = 1

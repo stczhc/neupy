@@ -23,16 +23,17 @@ plt.show()
 
 plt.contour(xg, yg, zx, levels=np.linspace(-300,300,60), colors='k')
 
-task = lb.LBFGS([0.25,1.8], 2)
+task = lb.LBFGS(2)
 task.p.eval = ml.xqsd_eval
 task.p.evald = ml.xqsd_evald
+task.start([0.25,1.8])
 task.log_file = 1
 task.opt()
 print ('ok')
 plt.hold('on')
 print (len(task.traj))
-x = [t[0] for t in task.traj]
-y = [t[1] for t in task.traj]
+x = [t[0][0] for t in task.traj]
+y = [t[0][1] for t in task.traj]
 plt.plot(x, y, 'r-')
 plt.savefig('xf1.pdf')
 plt.show()

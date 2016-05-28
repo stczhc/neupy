@@ -13,6 +13,8 @@ import theano
 import theano.tensor as T
 from sys import platform as _platform
 
+from formod.lbfgs import LBFGS
+
 if _platform == 'darwin':
   theano.config.cxx = "/usr/local/bin/g++-5"
 
@@ -122,7 +124,8 @@ class Cluster(object):
     np.random.shuffle(self.atoms[0:pre])
 
 # read input
-def read_input(fn):
+def read_input(fn, i=None):
+  if not i is None: fn += '.' + str(i)
   json_data = open(fn).read()
   json_data = re.sub(r'//.*\n', '\n', json_data)
   return json.loads(json_data)
@@ -139,6 +142,15 @@ def new_file_name(x):
   i = 0
   y = x + '.' + str(i)
   while os.path.isfile(y):
+    i += 1
+    y = x + '.' + str(i)
+  return y
+
+# avoid overwritting
+def new_path_name(x):
+  i = 0
+  y = x + '.' + str(i)
+  while os.path.exists(y):
     i += 1
     y = x + '.' + str(i)
   return y
@@ -192,6 +204,20 @@ def read_cluster(ener, xyz, ecut, expl, traj):
       cc += 2 + cn
   print 'structs loaded: ', len(clul)
   return clul
+
+# write optimized clusters to xyz file
+def write_cluster(fn, elems, atoms):
+  fnx = new_path_name(os.path.dirname(fn))
+  os.mkdir(fnx)
+  fna = os.path.basename(fn)
+  le = len(elems)
+  for i in range(atoms.shape[0]):
+    f = open(fnx + '/' + fna.replace('#', str(i)), 'w')
+    f.write(str(le) + '\n\n')
+    at = atoms[i].reshape(8, 3)
+    for x, y in zip(elems, at):
+      f.write('%5s%15.8f%15.8f%15.8f\n' % (x, y[0], y[1], y[2]))
+    f.close()
 
 # all permutation of atoms of a length list
 # return matrix of indices
@@ -258,7 +284,11 @@ def ipsize_new(n, d_order=False):
 
 def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
   sn = n
-  if typed == 'fit':
+  if typed == 'opt':
+    print ('prepare coords array ...')
+    x_d = np.array([c.atoms for c in clus])
+    y_d = np.array([c.energy for c in clus])
+  elif typed == 'fit':
     print ('prepare original coords array ...')
     xn = len(clus)
     gn = clus[0].n
@@ -271,13 +301,17 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
       x_dx = np.zeros((n, len(lx), npi_network.output_layer.size))
     y_d = np.zeros((n, ))
     x = np.zeros((len(clus) * (gn + 1 - num), len(lx), num, 3))
+    expl = clus[0].exp_length
     for i in range(n):
       if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
       ind = random.randrange(xn)
       cl = clus[ind]
       cl.shuffle()
       xx = cl.atoms[lx]
-      xx = np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2)
+      if expl == 0:
+        xx = np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2)
+      else:
+        xx = np.exp(-np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2) / expl)
       x_d[i, :, 0:lend] = xx
       if d_order: 
         x_d[i, :, lend:] = xx[:, gls[0]] * xx[:, gls[1]]
@@ -432,6 +466,7 @@ layer_dic = {
 }
 
 # update network parameters
+# used when training but with different parameters
 def update_network(net, ipdata):
   opts = { "error": "mse", "step": ipdata["step"], 
     "batch_size": ipdata["batch_size"], "nesterov": True, 
@@ -439,6 +474,58 @@ def update_network(net, ipdata):
     "show_epoch": ipdata["show_epoch"] }
   for k, v in opts.items():
     setattr(net, k, v)
+
+# return eval and evald functions for optimization
+def opt_funs(net, ipdata, expl, xmax, xmin, dmax, dmin):
+  x = T.dmatrix()
+  totn = ipdata["number_of_atoms"]
+  seln = ipdata["degree_of_fitting"]
+  ee = np.eye(totn, dtype=int)
+  le = np.array([list(g) for g in itertools.combinations(range(0, totn), seln)])
+  lena = le.shape[0]
+  lenb = seln * (seln - 1) / 2
+  lx = np.zeros((2, lenb), dtype=np.int)
+  k = 0
+  for i in range(0, seln):
+    for j in range(0, i):
+      lx[:, k] = i, j
+      k += 1
+  yl = le[:, lx.T]
+  lenc = totn * (totn - 1) / 2
+  lt = np.zeros((2, lenc), dtype=np.int)
+  k = 0
+  lti = np.zeros((totn, totn), dtype=np.int)
+  for i in range(0, totn):
+    for j in range(0, i):
+      lt[:, k] = i, j
+      lti[i, j] = k
+      lti[j, i] = k
+      k += 1
+  mt = (x[lt[0]] - x[lt[1]]).norm(2, axis=1)
+  if expl != 0: mt = np.exp(-mt / expl)
+  if not xmax is None: mt = trans_forward(mt, xmax, xmin)
+  ylt = lti[yl[:, :, 0], yl[:, :, 1]]
+  y = mt[ylt]
+  ylf = yl.reshape((lena * lenb, 2))
+  yltf = lti[ylf[:, 0], ylf[:, 1]]
+  mtd = []
+  for i in range(lenc):
+    print (str(i) + ' / ' + str(lenc))
+    mtd.append(theano.function([x], T.grad(mt[i], x).flatten()))
+  xx = net.variables.network_input
+  xf = net.variables.prediction_func[0][0]
+  xf = trans_backward(xf, dmax, dmin)
+  xuf = theano.function([xx], xf)
+  xy = theano.function([x], y)
+  opt_eval = (lambda x, xuf=xuf, xy=xy, lena=lena, lenb=lenb, 
+    totn=totn: xuf(xy(x.reshape(totn, 3)).reshape((1, lena, lenb))))
+  xyd = lambda x, mtd=mtd, yltf=yltf: np.array([di(x) for di in mtd])[yltf]
+  xfd = T.grad(xf, xx)
+  xufd = theano.function([xx], xfd)
+  opt_evald = (lambda x, xyd=xyd, xufd=xufd, xy=xy, lena=lena, lenb=lenb, totn=totn:
+    np.tensordot(xufd(xy(x.reshape(totn, 3)).reshape((1, lena, lenb)))
+      .reshape((lena * lenb, )), xyd(x.reshape(totn, 3)), axes=(0, 0)))
+  return opt_eval, opt_evald
 
 # construct npi_comparing network
 def create_network(ipdata, size, typed):
@@ -493,9 +580,10 @@ if __name__ == "__main__":
     print ('Need input file!')
   else:
     ip = read_input(sys.argv[1])
-    ipdt = ip["data_files"]
-    ippn = ip["npi_network"]
-    ipft = ip["fit_network"]
+    ipdt = ip["data_files"] if "data_files" in ip.keys() else None
+    ippn = ip["npi_network"] if "npi_network" in ip.keys() else None
+    ipft = ip["fit_network"] if "fit_network" in ip.keys() else None
+    ipop = ip["optimization"] if "optimization" in ip.keys() else None
     
     npic_network_name = ipdt["output_dir"] + "/npic_network.dill"
     npic_data_name = ipdt["output_dir"] + "/npic_data.dill"
@@ -505,6 +593,10 @@ if __name__ == "__main__":
     fit_data_name = ipdt["output_dir"] + "/fit_data.dill"
     fit_test_name = ipdt["output_dir"] + "/fit_test.txt"
     fit_error_name = ipdt["output_dir"] + "/fit_error.txt"
+    opt_data_name = ipdt["output_dir"] + "/opt_data.dill"
+    opt_test_name = ipdt["output_dir"] + "/opt_test.txt"
+    opt_out_name = ipdt["output_dir"] + "/opt_out.txt"
+    opt_structs_name = ipdt["output_dir"] + "/opt_structs/pos_#.xyz"
     summary_name = ipdt["output_dir"] + "/summary.txt"
     
     if not os.path.exists(ipdt["output_dir"]):
@@ -521,13 +613,90 @@ if __name__ == "__main__":
     ip["extra"] = {}
     ip["extra"]["energy_max"] = dmax
     ip["extra"]["energy_min"] = dmin
-    random.shuffle(clus)
+    if ipop is None or ipop["shuffle_input"]:
+      random.shuffle(clus)
+    natom = ipdt["number_of_atoms"]
     nd = ipdt["degree_of_fitting"]
     
     for task in ip["task"]:
       ip["extra"][task] = {}
+      
+      # OPT
+      if task == "opt":
+        print ('load network ...')
+        if ipop["load_network"] != -1:
+          if isinstance(ipop["load_network"], int):
+            fit_net = load_data(name=fit_network_name, i=ipop["load_network"])
+          else:
+            fit_net = load_data(name=ipop["load_network"])
+        else:
+          print ('Need fitted network!')
+          exit(-1)
+        
+        print ('load summary ...')
+        if ipop["load_summary"] != -1:
+          if isinstance(ipop["load_summary"], int):
+            smip = read_input(fn=summary_name, i=ipop["load_summary"])
+          else:
+            smip = read_input(fn=ipop["load_summary"])
+        else:
+          print ('Need fitting summary!')
+          exit(-1)
+        
+        if ipdt["load_data"] != -1:
+          if isinstance(ipdt["load_data"], int):
+            opt_data = load_data(name=opt_data_name, i=ipdt["load_data"])
+          else:
+            opt_data = load_data(name=ipdt["load_data"])
+        else:
+          opt_data = trans_data_new(clus, 0, 0, typed="opt")
+        
+        if "coord_max" in smip["extra"]["fit"].keys():
+          xmax = smip["extra"]["fit"]["coord_max"]
+          xmin = smip["extra"]["fit"]["coord_min"]
+        else:
+          xmax = None
+          xmin = None
+        
+        dmax, dmin = smip["extra"]["energy_max"], smip["extra"]["energy_min"]
+        
+        opt_eval, opt_evald = opt_funs(fit_net, ipdt, expl=ipdt["exp_length"], 
+          xmax=xmax, xmin=xmin, dmax=dmax, dmin=dmin)
+        
+        print ('test network ...')
+        ft = open(new_file_name(opt_test_name), 'w')
+        ft.write('%8s %15s %15s %15s\n' % ('id', 'standard', 'predict', 'error'))
+        nr = 0.0
+        for idx, x, y in zip(range(0, len(opt_data[0])), opt_data[0], opt_data[1]):
+          z = opt_eval(x.flatten())
+          nr += (y - z) ** 2
+          ft.write('%8d %15.8f %15.8f %15.8f\n' % (idx, y, z, abs(y - z)))
+        ft.close()
+        print ('%15.8f\n' % (sqrt(nr / len(opt_data[0])) * httoev), ' eV')
+        
+        print ('optimization ...')
+        task = LBFGS(natom * 3)
+        task.p.eval = opt_eval
+        task.p.evald = opt_evald
+        task.log_file = 0
+        ft = open(new_file_name(opt_out_name), 'w')
+        ft.write('%8s %15s %15s %15s %15s\n' % ('id', 'standard', 'original', 'final', 'change'))
+        nopt = ipop["opt_number"]
+        nopt = min(opt_data[0].shape[0], nopt)
+        finalx = np.zeros((nopt, natom * 3))
+        for idx, x, y in zip(range(0, len(opt_data[0])), opt_data[0], opt_data[1]):
+          if idx == nopt: break
+          task.start(x.flatten())
+          task.opt()
+          fo, ff = task.traj[0][1], task.traj[-1][1]
+          print ('# %d: %15.8f -> %15.8f (%d steps)' % (idx, fo, ff, len(task.traj)))
+          ft.write('%8d %15.8f %15.8f %15.8f %15.8f\n' % (idx, y, fo, ff, ff - fo))
+          finalx[idx] = task.x
+        ft.close()
+        write_cluster(opt_structs_name, clus[0].elems, finalx)
+      
       # NPI comparing
-      if task == "npic":
+      elif task == "npic":
         print ('create network ...')
         if ippn["load_network"] != -1:
           if isinstance(ippn["load_network"], int):

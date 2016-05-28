@@ -32,3 +32,5 @@ site/build/*
 data/
 *.sh
 *.tmp
+*.so
+*.so.dSYM

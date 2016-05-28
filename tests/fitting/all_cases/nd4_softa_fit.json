@@ -7,7 +7,7 @@
         "dump_data": false,
         "list_file": "../../data/tmpt8all/list.txt",
         "struct_file": "../../data/tmpt8all/structs/final_#.xyz",
-        "output_dir": "../../data/nd4_nonpib", 
+        "output_dir": "../../data/nd4_softa", 
         "trajectory_form": true,
         "energy_cut": -954.6,
         "number_of_atoms": 8,
@@ -54,7 +54,7 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 9,
+        "load_network": 1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             50,
@@ -63,15 +63,15 @@
             1
         ],
         "layer_types": [
-            "relu",
-            "relu", 
-            "relu", 
+            "soft_plus",
+            "soft_plus", 
+            "soft_plus", 
             "soft_plus"
         ],
-        "step": 0.01,
-        "batch_size": 100,
+        "step": 0.1, 
+        "batch_size": 105,
         "momentum": 0.8,
-        "show_epoch": 2,
+        "show_epoch": 1,
         "use_npic": true,
         "train_network": true,
         "test_network": true,

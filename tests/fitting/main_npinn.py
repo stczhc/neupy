@@ -14,6 +14,7 @@ import theano.tensor as T
 from sys import platform as _platform
 
 from formod.lbfgs import LBFGS
+from formod.at_sort import at_sort, at_comp
 
 if _platform == 'darwin':
   theano.config.cxx = "/usr/local/bin/g++-5"
@@ -181,10 +182,10 @@ def read_cluster(ener, xyz, ecut, expl, traj, ecol):
     g = [h for h in g if len(h) != 0]
     if len(g) == 0: continue
     if g[0] == 'id': continue
-    if len(g) >= ecol:
+    if len(g) >= ecol and ecol != -1:
       lf += [[g[0], float(g[ecol - 1])]]
     else:
-      lf += [[g[0]]]
+      lf += [[g[0], 0.0]]
   clul = []
   for l in lf:
     fn = xyz.replace('#', l[0])
@@ -205,7 +206,7 @@ def read_cluster(ener, xyz, ecut, expl, traj, ecol):
         i = i + 1
       clu.center()
       clu.label = l[0]
-      if clu.energy < max_energy:
+      if clu.energy < max_energy or ecol == -1:
         clul.append(clu)
       cc += 2 + cn
   print 'structs loaded: ', len(clul)
@@ -289,7 +290,7 @@ def ipsize_new(n, d_order=False):
   return size
 
 # exclude similar clusters
-def filter_cluster(clus, dmax):
+def filter_cluster(clus, dmax, dmax_rep, method):
   gn = clus[0].n
   lx = [list(g) for g in itertools.permutations(range(0, gn), gn)]
   lx = np.asarray(lx)
@@ -297,28 +298,54 @@ def filter_cluster(clus, dmax):
   lena = len(clus)
   lend = len(gl[0])
   clur = []
-  clul = np.zeros((lena, 1, lend))
   k = 0
+  lastl = 0
+  out_str = []
+  if method == 'atomic_sort': clul = np.zeros((lena, lend))
+  elif method == 'direct': clul = np.zeros((lena, 1, lend))
+  elif method == 'atomic_compare': clul = np.zeros((lena, gn, 3))
+  ne = 1
+  eles = np.ones((gn, ))
   for i, cl in zip(xrange(lena), clus):
-    if i % (lena / 10) == 0: print '{0} %'.format(i / (lena / 100))
-    xx = cl.atoms[lx]
-    xx = np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2)
+    if lena >= 10 and i % (lena / 10) == 0:
+      print ('{0} %'.format(int(i / (lena / 100.0))))
+    if method == 'atomic_sort': 
+      xx = at_sort(cl.atoms, ne, eles)
+    elif method == 'direct': 
+      xx = cl.atoms[lx]
+      xx = np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2)
+    elif method == 'atomic_compare':
+      xx = cl.atoms
     sim = -1
-    for hl in range(k)[::-1]:
-      v = np.amin(np.amax(np.abs(clul[hl] - xx), axis=1))
+    psmi = -1
+    psm = 10.0
+    for hl in range(k):
+      hlg = (hl + lastl) % k
+      if method == 'atomic_sort': v = np.amax(np.abs(clul[hlg] - xx))
+      elif method == 'direct': v = np.amin(np.amax(np.abs(clul[hlg] - xx), axis=1))
+      elif method == 'atomic_compare': v, _ = at_comp(xx, clul[hlg], ne, eles, dmax_rep)
+      # print v
       if v < dmax:
-        sim = hl
+        sim = hlg
         break
+      elif v < psm: psm, psmi = v, hlg
     if sim == -1:
-      print ("# %8s new (%5d) energy = %15.6f" % (cl.label, k + 1, cl.energy))
-      clul[k][0] = xx[0]
+      out_str.append("# %8s new (%5d ) E = %15.6f (%8s : dmax = %10.5f )" % 
+        (cl.label, k + 1, cl.energy, clur[psmi].label if psmi != -1 else '', psm))
+      if method == 'direct': print (out_str[-1])
+      if method == 'atomic_sort': clul[k] = xx
+      elif method == 'direct': clul[k][0] = xx[0]
+      elif method == 'atomic_compare': clul[k] = xx
       clur.append(cl)
+      lastl = k
       k += 1
     else:
-      print ("# %8s (E = %15.6f) -> %8s (E = %15.6f) dmax = %10.5f" % 
+      out_str.append("# %8s (E = %15.6f ) -> %8s (E = %15.6f ) dmax = %10.5f" % 
         (cl.label, cl.energy, clur[sim].label, clur[sim].energy, v))
+      if method == 'direct': print (out_str[-1])
       clur[sim].multi += 1
-  return clur
+      lastl = sim
+  return clur, out_str
   
 def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
   sn = n
@@ -637,6 +664,7 @@ if __name__ == "__main__":
     opt_list_name = ipdt["output_dir"] + "/opt_list.txt"
     opt_structs_name = ipdt["output_dir"] + "/opt_structs/pos_#.xyz"
     fil_list_name = ipdt["output_dir"] + "/fil_list.txt"
+    fil_corr_name = ipdt["output_dir"] + "/fil_corr.txt"
     fil_structs_name = ipdt["output_dir"] + "/fil_structs/pos_#.xyz"
     summary_name = ipdt["output_dir"] + "/summary.txt"
     
@@ -651,10 +679,11 @@ if __name__ == "__main__":
     }
     rcopts['ecol'] = ipdt["energy_column"] if "energy_column" in ipdt else 1
     clus = read_cluster(**rcopts)
-    dmax, dmin = find_max_min(clus, ipdt["min_max_ext_ratio"])
     ip["extra"] = {}
-    ip["extra"]["energy_max"] = dmax
-    ip["extra"]["energy_min"] = dmin
+    if ipdt["energy_column"] != -1:
+      dmax, dmin = find_max_min(clus, ipdt["min_max_ext_ratio"])
+      ip["extra"]["energy_max"] = dmax
+      ip["extra"]["energy_min"] = dmin
     if not "filter" in ip["task"] and (ipop is None or ipop["shuffle_input"]):
       random.shuffle(clus)
     natom = ipdt["number_of_atoms"]
@@ -666,13 +695,17 @@ if __name__ == "__main__":
       # FILTER
       if task == "filter":
         print ('filter structures ...')
-        clur = filter_cluster(clus, ipfl["max_diff"])
+        clur, corr = filter_cluster(clus, ipfl["max_diff"], 
+          dmax_rep=ipfl["max_diff_report"], method=ipfl["method"])
         atoms = np.zeros((len(clur), clur[0].n, 3))
         ft = open(new_file_name(fil_list_name), 'w')
         ft.write('%8s %8s %8s %15s\n' % ('id', 'old-id', 'multi', 'pre-energy'))
         for idx, r in zip(xrange(len(clur)), clur):
           ft.write('%8d %8s %8d %15.8f\n' % (idx, r.label, r.multi, r.energy))
           atoms[idx] = r.atoms
+        ft.close()
+        ft = open(new_file_name(fil_corr_name), 'w')
+        for c in corr: ft.write(c + '\n')
         ft.close()
         write_cluster(fil_structs_name, clur[0].elems, atoms)
         

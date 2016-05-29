@@ -9,11 +9,14 @@
         "shuffle_input": false
     }, 
     "filtering": {
-        "max_diff": 0.03
+        "max_diff": 0.25, 
+        "max_diff_report": 1.00, 
+        "method": "atomic_compare"
     }, 
     "data_files": {
         "load_data": -1,
         "dump_data": false,
+        // "list_file": "../../data/nd4_softa/lista.txt", 
         "list_file": "../../data/nd4_softa/opt_list.txt.1",
         "struct_file": "../../data/nd4_softa/opt_structs.0/pos_#.xyz",
         "output_dir": "../../data/nd4_softa", 

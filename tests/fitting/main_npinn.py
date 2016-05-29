@@ -45,6 +45,8 @@ class Cluster(object):
     self.energy = 0.0
     self.mat_ll = []
     self.exp_length = expl
+    self.label = None
+    self.multi = 1
   
   # assign mat_ll values
   def gen_ll(self):
@@ -168,7 +170,7 @@ def load_data(name, i=None):
     return dill.load(f)
 
 # return a list of Cluster objects
-def read_cluster(ener, xyz, ecut, expl, traj):
+def read_cluster(ener, xyz, ecut, expl, traj, ecol):
   max_energy = ecut
   f = open(ener, 'r')
   fs = f.readlines()
@@ -176,8 +178,11 @@ def read_cluster(ener, xyz, ecut, expl, traj):
   lf = []
   for f in fs:
     g = f.replace('\n', '').split(' ')
-    if len(g) >= 2:
-      lf += [[g[0], float(g[1])]]
+    g = [h for h in g if len(h) != 0]
+    if len(g) == 0: continue
+    if g[0] == 'id': continue
+    if len(g) >= ecol:
+      lf += [[g[0], float(g[ecol - 1])]]
     else:
       lf += [[g[0]]]
   clul = []
@@ -199,6 +204,7 @@ def read_cluster(ener, xyz, ecut, expl, traj):
         clu.atoms[i] = ar
         i = i + 1
       clu.center()
+      clu.label = l[0]
       if clu.energy < max_energy:
         clul.append(clu)
       cc += 2 + cn
@@ -282,6 +288,38 @@ def ipsize_new(n, d_order=False):
   if d_order: size = size + size * (size + 1) / 2
   return size
 
+# exclude similar clusters
+def filter_cluster(clus, dmax):
+  gn = clus[0].n
+  lx = [list(g) for g in itertools.permutations(range(0, gn), gn)]
+  lx = np.asarray(lx)
+  gl = get_length_new(gn)
+  lena = len(clus)
+  lend = len(gl[0])
+  clur = []
+  clul = np.zeros((lena, 1, lend))
+  k = 0
+  for i, cl in zip(xrange(lena), clus):
+    if i % (lena / 10) == 0: print '{0} %'.format(i / (lena / 100))
+    xx = cl.atoms[lx]
+    xx = np.linalg.norm(xx[:, gl[0]] - xx[:, gl[1]], axis=2)
+    sim = -1
+    for hl in range(k)[::-1]:
+      v = np.amin(np.amax(np.abs(clul[hl] - xx), axis=1))
+      if v < dmax:
+        sim = hl
+        break
+    if sim == -1:
+      print ("# %8s new (%5d) energy = %15.6f" % (cl.label, k + 1, cl.energy))
+      clul[k][0] = xx[0]
+      clur.append(cl)
+      k += 1
+    else:
+      print ("# %8s (E = %15.6f) -> %8s (E = %15.6f) dmax = %10.5f" % 
+        (cl.label, cl.energy, clur[sim].label, clur[sim].energy, v))
+      clur[sim].multi += 1
+  return clur
+  
 def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
   sn = n
   if typed == 'opt':
@@ -303,7 +341,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
     x = np.zeros((len(clus) * (gn + 1 - num), len(lx), num, 3))
     expl = clus[0].exp_length
     for i in range(n):
-      if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
+      if i % (n / 10) == 0: print '{0} %'.format(i / (n / 100))
       ind = random.randrange(xn)
       cl = clus[ind]
       cl.shuffle()
@@ -341,7 +379,7 @@ def trans_data_new(clus, n, num, typed, npi_network=None, d_order=False):
       while ind2 == ind: ind2 = random.randrange(pn)
       p[i][1] = pp[ind2]
     for i in xrange(sn / 2, sn):
-      if i % (n / 100) == 0: print '{0} %'.format(i / (n / 100))
+      if i % (n / 10) == 0: print '{0} %'.format(i / (n / 100))
       p[i][0] = pp[random.randrange(pn)]
       pl = list(pp[random.randrange(pn)])
       while pl in pp:
@@ -510,7 +548,7 @@ def opt_funs(net, ipdata, expl, xmax, xmin, dmax, dmin):
   yltf = lti[ylf[:, 0], ylf[:, 1]]
   mtd = []
   for i in range(lenc):
-    print (str(i) + ' / ' + str(lenc))
+    if i % (lenc / 10) == 0: print '{0} %'.format(int(i / (lenc / 100.0)))
     mtd.append(theano.function([x], T.grad(mt[i], x).flatten()))
   xx = net.variables.network_input
   xf = net.variables.prediction_func[0][0]
@@ -584,6 +622,7 @@ if __name__ == "__main__":
     ippn = ip["npi_network"] if "npi_network" in ip.keys() else None
     ipft = ip["fit_network"] if "fit_network" in ip.keys() else None
     ipop = ip["optimization"] if "optimization" in ip.keys() else None
+    ipfl = ip["filtering"] if "filtering" in ip.keys() else None
     
     npic_network_name = ipdt["output_dir"] + "/npic_network.dill"
     npic_data_name = ipdt["output_dir"] + "/npic_data.dill"
@@ -595,8 +634,10 @@ if __name__ == "__main__":
     fit_error_name = ipdt["output_dir"] + "/fit_error.txt"
     opt_data_name = ipdt["output_dir"] + "/opt_data.dill"
     opt_test_name = ipdt["output_dir"] + "/opt_test.txt"
-    opt_out_name = ipdt["output_dir"] + "/opt_out.txt"
+    opt_list_name = ipdt["output_dir"] + "/opt_list.txt"
     opt_structs_name = ipdt["output_dir"] + "/opt_structs/pos_#.xyz"
+    fil_list_name = ipdt["output_dir"] + "/fil_list.txt"
+    fil_structs_name = ipdt["output_dir"] + "/fil_structs/pos_#.xyz"
     summary_name = ipdt["output_dir"] + "/summary.txt"
     
     if not os.path.exists(ipdt["output_dir"]):
@@ -608,12 +649,13 @@ if __name__ == "__main__":
       "ecut": ipdt["energy_cut"], "expl": ipdt["exp_length"], 
       "traj": ipdt["trajectory_form"]
     }
+    rcopts['ecol'] = ipdt["energy_column"] if "energy_column" in ipdt else 1
     clus = read_cluster(**rcopts)
     dmax, dmin = find_max_min(clus, ipdt["min_max_ext_ratio"])
     ip["extra"] = {}
     ip["extra"]["energy_max"] = dmax
     ip["extra"]["energy_min"] = dmin
-    if ipop is None or ipop["shuffle_input"]:
+    if not "filter" in ip["task"] and (ipop is None or ipop["shuffle_input"]):
       random.shuffle(clus)
     natom = ipdt["number_of_atoms"]
     nd = ipdt["degree_of_fitting"]
@@ -621,6 +663,19 @@ if __name__ == "__main__":
     for task in ip["task"]:
       ip["extra"][task] = {}
       
+      # FILTER
+      if task == "filter":
+        print ('filter structures ...')
+        clur = filter_cluster(clus, ipfl["max_diff"])
+        atoms = np.zeros((len(clur), clur[0].n, 3))
+        ft = open(new_file_name(fil_list_name), 'w')
+        ft.write('%8s %8s %8s %15s\n' % ('id', 'old-id', 'multi', 'pre-energy'))
+        for idx, r in zip(xrange(len(clur)), clur):
+          ft.write('%8d %8s %8d %15.8f\n' % (idx, r.label, r.multi, r.energy))
+          atoms[idx] = r.atoms
+        ft.close()
+        write_cluster(fil_structs_name, clur[0].elems, atoms)
+        
       # OPT
       if task == "opt":
         print ('load network ...')
@@ -679,17 +734,17 @@ if __name__ == "__main__":
         task.p.eval = opt_eval
         task.p.evald = opt_evald
         task.log_file = 0
-        ft = open(new_file_name(opt_out_name), 'w')
+        ft = open(new_file_name(opt_list_name), 'w')
         ft.write('%8s %15s %15s %15s %15s\n' % ('id', 'standard', 'original', 'final', 'change'))
         nopt = ipop["opt_number"]
-        nopt = min(opt_data[0].shape[0], nopt)
+        nopt = opt_data[0].shape[0] if nopt == -1 else min(opt_data[0].shape[0], nopt)
         finalx = np.zeros((nopt, natom * 3))
         for idx, x, y in zip(range(0, len(opt_data[0])), opt_data[0], opt_data[1]):
           if idx == nopt: break
           task.start(x.flatten())
           task.opt()
           fo, ff = task.traj[0][1], task.traj[-1][1]
-          print ('# %d: %15.8f -> %15.8f (%d steps)' % (idx, fo, ff, len(task.traj)))
+          print ('# %8d: %15.8f -> %15.8f (%5d steps)' % (idx, fo, ff, len(task.traj)))
           ft.write('%8d %15.8f %15.8f %15.8f %15.8f\n' % (idx, y, fo, ff, ff - fo))
           finalx[idx] = task.x
         ft.close()

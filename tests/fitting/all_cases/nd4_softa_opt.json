@@ -5,8 +5,8 @@
     "optimization": {
         "load_network": 1, 
         "load_summary": 1, 
-        "opt_number": 200, 
-        "shuffle_input": true
+        "opt_number": -1, 
+        "shuffle_input": false
     }, 
     "data_files": {
         "load_data": -1,

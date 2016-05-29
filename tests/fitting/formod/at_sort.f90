@@ -14,7 +14,7 @@ SUBROUTINE at_comp(n, x, y, nele, eles, dmax, d, msel)
   INTEGER :: nea(nele), ndi(nele, n), ndu(nele, n)
   INTEGER :: sel(n), est(n), esti
   INTEGER :: i, j, ai, si, ei
-  REAL(8) :: dl(n), dtmp, dmin, dh, dy(n, n)
+  REAL(8) :: dl(n), dmin, dh, dy(n, n)
   
   nea = 0
   ndi = 0

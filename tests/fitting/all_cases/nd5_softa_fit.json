@@ -54,7 +54,7 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 1,
+        "load_network": 2,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             40,

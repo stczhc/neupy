@@ -7,9 +7,8 @@
         "dump_data": false,
         "list_file": "../../data/tmpt8all/list.txt",
         "struct_file": "../../data/tmpt8all/structs/final_#.xyz",
-        "output_dir": "../../data/nd5_tana", 
+        "output_dir": "../../data/nd5_etanb", 
         "trajectory_form": true,
-        "energy_column": 2, 
         "energy_cut": -954.6,
         "number_of_atoms": 8,
         "degree_of_fitting": 5,
@@ -23,9 +22,9 @@
             0.5,
             0.5
         ],
-        "exp_length": 0,
+        "exp_length": 5.0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true,
+        "scale_lengths": false,
         "dump_summary": true, 
         "second_order": false
     },
@@ -55,21 +54,23 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 9,
+        "load_network": 1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            60,
-            60, 
+            40,
+            40, 
+            40, 
             10, 
-            1
+            2
         ],
         "layer_types": [
             "tanh",
             "tanh", 
             "tanh", 
-            "soft_plus"
+            "tanh", 
+            "tanh"
         ],
-        "step": 0.03,
+        "step": 0.05,
         "batch_size": 100,
         "momentum": 0.8,
         "show_epoch": 1,

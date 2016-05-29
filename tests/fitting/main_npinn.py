@@ -18,6 +18,7 @@ from formod.at_sort import at_sort, at_comp
 
 if _platform == 'darwin':
   theano.config.cxx = "/usr/local/bin/g++-5"
+sys.setrecursionlimit(100000)
 
 print (neupy.__version__)
 print (theano.config.base_compiledir)

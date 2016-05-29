@@ -758,6 +758,7 @@ if __name__ == "__main__":
             npic_net = load_data(name=npic_network_name, i=ippn["load_network"])
           else:
             npic_net = load_data(name=ippn["load_network"])
+          update_network(npic_net, ippn)
         else:
           npic_net = create_network(ippn, ipsize_new(nd, ipdt['second_order']), 'npic')
         

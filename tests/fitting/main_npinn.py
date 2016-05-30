@@ -540,6 +540,9 @@ def update_network(net, ipdata):
     "show_epoch": ipdata["show_epoch"] }
   for k, v in opts.items():
     setattr(net, k, v)
+  net.init_layers()
+  net.init_variables()
+  net.inti_methods()
 
 # return eval and evald functions for optimization
 def opt_funs(net, ipdata, expl, xmax, xmin, dmax, dmin):

@@ -15,6 +15,7 @@ class Cluster(object):
     self.elems = np.array([''] * n)
     self.energy = 0.0
     self.eps = np.finfo(dtype=np.float64).eps * 100
+    self.label = ''
   
   # sample uniformly in the unit sphere
   def random_direction(self):
@@ -133,7 +134,10 @@ class Cluster(object):
   # write coordinates to file
   def write_xyz(self, fn):
     f = open(fn, 'a')
-    f.write('%d\nE = %15.8f\n' % (self.n, self.energy))
+    if self.label == '':
+      f.write('%d\nE = %15.8f\n' % (self.n, self.energy))
+    else:
+      f.write('%d\n%s = %15.8f\n' % (self.n, self.label, self.energy))
     for x, y in zip(self.elems, self.atoms):
       f.write('%5s%15.8f%15.8f%15.8f\n' % (x, y[0], y[1], y[2]))
     f.close()
@@ -242,6 +246,7 @@ if __name__ == "__main__":
     for task in ip["task"]:
       if task == "create":
         elems, et = elem_char(ip["cluster"]["name"])
+        etx = et.replace(' ', '')
         clnum = ip["cluster"]["number"]
         opts = { "elems": elems, "mean": ip["stat"]["mean"], 
           "sigma": ip["stat"]["sigma"] }
@@ -273,6 +278,7 @@ if __name__ == "__main__":
             clul.append(c)
             out_str.append(" struct # %5d / %5d: [S = %5d]" % (len(clul), clnum, nsim))
             print (out_str[-1])
+            c.label = etx + ':' + str(len(clul) - 1)
             c.write_xyz(fname)
             nsim = 0
           else:

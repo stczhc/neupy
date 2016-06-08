@@ -5,7 +5,6 @@
 import numpy as np
 import numpy.core.defchararray as npch
 from math import *
-import matplotlib.pyplot as plt
 import re, os, sys, json
 from formod.at_sort import at_comp
 

@@ -250,6 +250,7 @@ if __name__ == "__main__":
         fname = new_file_name(structs_name)
         dmax = ip["filtering"]["max_diff"]
         dmax_rep = ip["filtering"]["max_diff_report"]
+        order = ip["cluster"]["order"]
         eles = elem_num(elems)
         ne = len(eles)
         nsim = 0
@@ -261,7 +262,8 @@ if __name__ == "__main__":
         # generate
         while len(clul) < clnum:
           c = Cluster(elems.shape[0])
-          c.create(**opts)
+          if order == 2: c.create(**opts)
+          elif order == 1: c.create_simple(**opts)
           ok = True
           for i in clul:
             v, _ = at_comp(i.atoms, c.atoms, ne, eles, dmax_rep)

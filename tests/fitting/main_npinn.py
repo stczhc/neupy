@@ -184,7 +184,7 @@ def read_cluster(ener, xyz, ecut, expl, traj, ecol):
     g = f.replace('\n', '').split(' ')
     g = [h for h in g if len(h) != 0]
     if len(g) == 0: continue
-    if g[0] == 'id': continue
+    if g[0].lower() == 'id': continue
     if len(g) >= ecol and ecol != -1:
       lf += [[g[0], float(g[ecol - 1])]]
     else:

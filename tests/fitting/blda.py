@@ -7,6 +7,7 @@ import numpy.core.defchararray as npch
 from math import *
 import re, os, sys, json
 from formod.at_sort import at_comp
+import coval
 
 class Cluster(object):
   def __init__(self, n):
@@ -50,11 +51,12 @@ class Cluster(object):
   # create cluster using second-order bond length distribution method
   def create(self, elems, mean, sigma):
     self.elems = elems
+    elemsx = np.array(elems)
     indx = range(self.n)
     np.random.shuffle(indx)
-    elems[indx] = elems[:]
+    elemsx[indx] = np.array(elemsx[:])
     self.atoms[0] = 0.0
-    m = elems[0] + '-' + elems[1]
+    m = elemsx[0] + '-' + elemsx[1]
     l = np.random.normal(mean[m][0], sigma[m][0])
     self.atoms[1] = self.random_direction() * l
     self.atoms[0:2] -= self.atoms[1] / 2
@@ -63,8 +65,8 @@ class Cluster(object):
         shu = range(i)
         np.random.shuffle(shu)
         ix, iy = shu[0:2]
-        mx = elems[i] + '-' + elems[ix]
-        my = elems[i] + '-' + elems[iy]
+        mx = elemsx[i] + '-' + elemsx[ix]
+        my = elemsx[i] + '-' + elemsx[iy]
         lx = np.random.normal(mean[mx][0], sigma[mx][0])
         if my != mx:
           ly = np.random.normal(mean[my][0], sigma[my][0])
@@ -75,9 +77,10 @@ class Cluster(object):
         surfn = self.atoms[iy] - self.atoms[ix]
         lz = np.linalg.norm(surfn)
         if lz > lx + ly: continue
-        lxx = lz * lx / (lx + ly)
+        alx = np.arccos((lz**2 + lx**2 - ly**2) / (2*lz*lx))
+        lxx = np.cos(alx) * lx
         lr = np.sqrt(lx ** 2 - lxx ** 2)
-        cent = surfn * lx / (lx + ly) + self.atoms[ix]
+        cent = surfn * lxx / lz + self.atoms[ix]
         surfn = surfn / np.linalg.norm(surfn)
         ok = False
         for j in range(10):
@@ -86,7 +89,9 @@ class Cluster(object):
           ra = cent + ra * lr / np.linalg.norm(ra)
           okr = True
           for k in shu[2:]:
-            if np.linalg.norm(self.atoms[k] - ra) < lx:
+            mg = elemsx[i] + '-' + elemsx[k]
+            lg = np.random.normal(mean[mg][0], sigma[mg][0])
+            if np.linalg.norm(self.atoms[k] - ra) < lg:
               okr = False
               break
           if okr:
@@ -94,9 +99,12 @@ class Cluster(object):
             break
         if ok:
           self.atoms[i] = ra
-          self.atoms[0:i+1] -= self.atoms[i] / (i + 1)
+          self.atoms[0:i+1] -= np.array(self.atoms[i]) / (i + 1)
           break
-    self.atoms = self.atoms[indx]
+    self.elems = elemsx
+    self.get_dist()
+    self.elems = elems
+    self.atoms = np.array(self.atoms[indx])
   
   # return the position of the center
   def get_center(self):
@@ -180,9 +188,9 @@ def elem_num(elems):
       lel.append(j + 1)
   return lel
 
-rxa = r'^\s*([A-Z]*[a-z]+)\s*([0-9]+)(.*)$'
+rxa = r'^\s*([A-Za-z][a-z]*)\s*([0-9]+)(.*)$'
 rxb = r'^\s*\(\s*([^\)]+)\s*\)\s*([0-9]+)(.*)$'
-rxc = r'^\s*([A-Z]*[a-z]+)(.*)$'
+rxc = r'^\s*([A-Za-z][a-z]*)(.*)$'
 rxd = r'^\s*$'
 
 # cluster name solve
@@ -201,10 +209,10 @@ def elem_char(name):
       name = ra[0][2]
     else:
       ra = re.findall(rxc, name)
-      ne = ra[0][:1].upper() + ra[0][1:]
+      ne = ra[0][0][:1].upper() + ra[0][0][1:]
       dc += [ne]
       dct += [ne]
-      name = ra[1]
+      name = ra[0][1]
   return np.array(dc), ' '.join(dct)
 
 # avoid overwritting
@@ -230,6 +238,31 @@ def write_json(json_data, fn):
   json.dump(json_data, f, indent=4)
   f.close()
 
+# use default covalent bonds if necessary
+def update_stat(elems, xmean, xsigma, def_sigma):
+  elems = list(set(elems))
+  for i in range(len(elems)):
+    for j in range(len(elems)):
+      nn = elems[i] + '-' + elems[j]
+      if nn in xmean.keys():
+        if len(xmean[nn]) == 1: xmean[nn].append(xmean[nn][0])
+      if nn not in xmean.keys() or len(xmean[nn]) == 0:
+        if elems[i] in coval.Covalent.x and elems[j] in coval.Covalent.x:
+          l = coval.Covalent.x[elems[i]] + coval.Covalent.x[elems[j]]
+          xmean[nn] = [l, l]
+      if nn in xsigma.keys():
+        if len(xsigma[nn]) == 1: xsigma[nn].append(xsigma[nn][0] * 10)
+      if nn not in xsigma.keys() or len(xsigma[nn]) == 0:
+        xsigma[nn] = [def_sigma, def_sigma * 10]
+  for i in range(len(elems)):
+    for j in range(len(elems)):
+      nn = elems[i] + '-' + elems[j]
+      nx = elems[j] + '-' + elems[i]
+      if nn in xmean and nx not in xmean:
+        xmean[nx] = xmean[nn]
+      if nn in xsigma and nx not in xsigma:
+        xsigma[nx] = xsigma[nn]
+
 # main program
 if __name__ == "__main__":
   if len(sys.argv) < 1 + 1:
@@ -248,8 +281,10 @@ if __name__ == "__main__":
         elems, et = elem_char(ip["cluster"]["name"])
         etx = et.replace(' ', '')
         clnum = ip["cluster"]["number"]
-        opts = { "elems": elems, "mean": ip["stat"]["mean"], 
-          "sigma": ip["stat"]["sigma"] }
+        xmean, xsigma = {}, {}
+        if "stat" in ip.keys(): xmean, xsigma = ip["stat"]["mean"], ip["stat"]["sigma"]
+        update_stat(elems, xmean, xsigma, ip["cluster"]["default_sigma"])
+        opts = { "elems": elems, "mean": xmean, "sigma": xsigma }
         clul = []
         fname = new_file_name(structs_name)
         dmax = ip["filtering"]["max_diff"]

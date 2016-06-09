@@ -6,9 +6,9 @@
         "output_dir": "../../data/blda_data/pt10"
     },
     "cluster": {
-        "name": "Pt8",
-        "number": 1000, 
-        "default_sigma": 0.400, 
+        "name": "Pt7B",
+        "number": 200, 
+        "default_sigma": 0.040, 
         "order": 2
     },
     "stat": {
@@ -21,7 +21,7 @@
         "sigma": {
             "Pt-Pt": [
                 0.042,
-                1.690
+                0.169
             ]
         }
     },

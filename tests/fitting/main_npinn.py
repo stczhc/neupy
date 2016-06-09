@@ -1,4 +1,6 @@
 
+# main homogeneous neural network fitting method
+
 import numpy as np
 from math import *
 import random, sys, os, itertools

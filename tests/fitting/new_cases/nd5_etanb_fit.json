@@ -9,6 +9,7 @@
         "struct_file": "../../data/tmpt8all/structs/final_#.xyz",
         "output_dir": "../../data/nd5_etanb", 
         "trajectory_form": true,
+        "energy_column": 2, 
         "energy_cut": -954.6,
         "number_of_atoms": 8,
         "degree_of_fitting": 5,
@@ -54,7 +55,7 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 1,
+        "load_network": 2,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             40,

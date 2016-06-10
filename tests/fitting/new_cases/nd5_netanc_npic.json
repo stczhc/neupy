@@ -1,13 +1,13 @@
 {
     "task": [
-        "fit"
+        "npic"
     ],
     "data_files": {
         "load_data": -1,
         "dump_data": false,
         "list_file": "../../data/tmpt8all/list.txt",
         "struct_file": "../../data/tmpt8all/structs/final_#.xyz",
-        "output_dir": "../../data/nd5_softa", 
+        "output_dir": "../../data/nd5_netanc", 
         "trajectory_form": true,
         "energy_column": 2, 
         "energy_cut": -954.6,
@@ -23,26 +23,28 @@
             0.5,
             0.5
         ],
-        "exp_length": 0,
+        "exp_length": 5.0,
         "min_max_ext_ratio": 0.05, // 0.05 for each
-        "scale_lengths": true,
+        "scale_lengths": false,
         "dump_summary": true, 
         "second_order": false
     },
     "npi_network": {
-        "load_network": 0,
+        "load_network": 8,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
-            80, // the first layer output size
-            40 // the second layer output size
+            50, // the first layer output size
+            50, // the first layer output size
+            30 // the second layer output size
         ],
         "layer_types": [
-            "relu",
-            "relu"
+            "tanh",
+            "tanh",
+            "soft_plus"
         ], // the 1st, 2nd layer type. 3rd will be output
         // tanh, sigmoid, soft_plus, soft_max, relu
-        "step": 0.005,
-        "batch_size": 10,
+        "step": 0.03,
+        "batch_size": 100,
         "momentum": 0.8,
         "show_epoch": 2,
         "exponential": 10.0,
@@ -55,7 +57,7 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 3,
+        "load_network": -1,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             40,
@@ -65,11 +67,11 @@
             2
         ],
         "layer_types": [
-            "soft_plus",
-            "soft_plus",
-            "soft_plus",
-            "soft_plus",
-            "soft_plus"
+            "tanh",
+            "tanh", 
+            "tanh", 
+            "tanh", 
+            "tanh"
         ],
         "step": 0.05,
         "batch_size": 100,
@@ -78,7 +80,7 @@
         "use_npic": true,
         "train_network": true,
         "test_network": true,
-        "epochs": 300,
+        "epochs": 2,
         "test_output": true, 
         "error_output": true
     }

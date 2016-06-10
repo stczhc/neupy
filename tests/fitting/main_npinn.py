@@ -884,7 +884,8 @@ if __name__ == "__main__":
             fit_net = load_data(name=fit_network_name, i=ipft["load_network"])
           else:
             fit_net = load_data(name=ipft["load_network"])
-          if "load_ref_network" in ipft and ipft["load_ref_network"] != -1:
+          if "load_ref_network" in ipft.keys() and ipft["load_ref_network"] != -1:
+            print ('use ref network ...')
             if isinstance(ipft["load_ref_network"], int):
               fit_ref_net = load_data(name=fit_network_name, i=ipft["load_ref_network"])
             else:

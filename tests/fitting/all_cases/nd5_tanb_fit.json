@@ -55,7 +55,7 @@
     },
     "fit_network": {
         "load_npic_network": -1,
-        "load_network": 4,
+        "load_network": 6,
         "dump_network": true,
         "sizes": [ // the input layer size will be calculated auto
             40,
@@ -71,7 +71,7 @@
             "tanh", 
             "tanh"
         ],
-        "step": 0.05,
+        "step": 0.01,
         "batch_size": 100,
         "momentum": 0.8,
         "show_epoch": 1,

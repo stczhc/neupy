@@ -884,6 +884,12 @@ if __name__ == "__main__":
             fit_net = load_data(name=fit_network_name, i=ipft["load_network"])
           else:
             fit_net = load_data(name=ipft["load_network"])
+          if "load_ref_network" in ipft and ipft["load_ref_network"] != -1:
+            if isinstance(ipft["load_ref_network"], int):
+              fit_ref_net = load_data(name=fit_network_name, i=ipft["load_ref_network"])
+            else:
+              fit_ref_net = load_data(name=ipft["load_ref_network"])
+            transfer_parameters(fit_ref_net, fit_net)
           update_network(fit_net, ipft)
         else:
           if ipft["load_npic_network"] != -1:

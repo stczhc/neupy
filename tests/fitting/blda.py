@@ -101,9 +101,6 @@ class Cluster(object):
           self.atoms[i] = ra
           self.atoms[0:i+1] -= np.array(self.atoms[i]) / (i + 1)
           break
-    self.elems = elemsx
-    self.get_dist()
-    self.elems = elems
     self.atoms = np.array(self.atoms[indx])
   
   # return the position of the center
@@ -112,7 +109,7 @@ class Cluster(object):
   
   # will change the coordinates
   def center(self):
-    self.atoms = self.atoms - self.get_center()
+    self.atoms -= self.get_center()
   
   # get original data for measuring the bond length distribution
   def get_dist(self):
